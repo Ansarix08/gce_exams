@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Manage Student Enrollments</h2>
+    
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    {% for course in courses %}
+                    <th>{{ course.name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.username }}</td>
+                    {% for course in courses %}
+                    <td>
+                        {% if course.id in enrollments[student.id] %}
+                        <button class="btn btn-danger btn-sm" onclick="unenrollStudent('{{ student.id }}', '{{ course.id }}')">
+                            Unenroll
+                        </button>
+                        {% else %}
+                        <button class="btn btn-success btn-sm" onclick="enrollStudent('{{ student.id }}', '{{ course.id }}')">
+                            Enroll
+                        </button>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function enrollStudent(studentId, courseId) {
+    fetch('/enroll_student', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            student_id: studentId,
+            course_id: courseId
+        }),
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Failed to enroll student: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while enrolling the student');
+    });
+}
+
+function unenrollStudent(studentId, courseId) {
+    fetch('/unenroll_student', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            student_id: studentId,
+            course_id: courseId
+        }),
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Failed to unenroll student: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while unenrolling the student');
+    });
+}
+</script>
+{% endblock %}

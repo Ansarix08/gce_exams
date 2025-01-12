@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">Edit Question</h3>
+        </div>
+        <div class="card-body">
+            <form id="editQuestionForm" action="{{ url_for('edit_question', question_id=question.id) }}" method="POST">
+                <div class="mb-3">
+                    <label for="question_text" class="form-label">Question Text</label>
+                    <textarea name="question_text" id="question_text" class="form-control" required>{{ question.question_text }}</textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="option_a" class="form-label">Option A</label>
+                    <input type="text" name="option_a" id="option_a" class="form-control" value="{{ question.option_a }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="option_b" class="form-label">Option B</label>
+                    <input type="text" name="option_b" id="option_b" class="form-control" value="{{ question.option_b }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="option_c" class="form-label">Option C</label>
+                    <input type="text" name="option_c" id="option_c" class="form-control" value="{{ question.option_c }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="option_d" class="form-label">Option D</label>
+                    <input type="text" name="option_d" id="option_d" class="form-control" value="{{ question.option_d }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="correct_answer" class="form-label">Correct Answer</label>
+                    <select name="correct_answer" id="correct_answer" class="form-control" required>
+                        <option value="A" {% if question.correct_answer == 'A' %}selected{% endif %}>A</option>
+                        <option value="B" {% if question.correct_answer == 'B' %}selected{% endif %}>B</option>
+                        <option value="C" {% if question.correct_answer == 'C' %}selected{% endif %}>C</option>
+                        <option value="D" {% if question.correct_answer == 'D' %}selected{% endif %}>D</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="day" class="form-label">Day</label>
+                    <input type="number" name="day" id="day" class="form-control" value="{{ question.day }}" min="1" max="6" required>
+                    <small class="text-muted">The day on which this question will be shown to students</small>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="container mt-3">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+{% endblock %}

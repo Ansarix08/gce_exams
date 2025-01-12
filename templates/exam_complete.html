@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Complete - Day {{ day }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h2 class="text-center mb-0">Day {{ day }} Exam Completed</h2>
+                </div>
+                <div class="card-body text-center">
+                    {% if current_user.is_teacher %}
+                    <div class="display-4 mb-4">
+                        Score: {{ score }}/{{ total }}
+                    </div>
+                    <div class="h3 text-muted">
+                        Percentage: {{ percentage | round(2) }}%
+                    </div>
+                    <hr>
+                    {% else %}
+                    <div class="h4 mb-4">
+                        Thank you for completing the Day {{ day }} exam. Your responses have been recorded.
+                    </div>
+                    <div class="text-muted mb-4">
+                        Your exam has been submitted successfully. Your teacher will review it and provide feedback.
+                    </div>
+                    <hr>
+                    {% endif %}
+                    <div class="mt-4">
+                        {% if not current_user.is_teacher %}
+                            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-lg">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

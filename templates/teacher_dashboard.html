@@ -1,0 +1,1061 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .section-card {
+        display: none;
+    }
+    .section-card.active {
+        display: block;
+    }
+    .nav-link {
+        cursor: pointer;
+    }
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    .option-item {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    body {
+        overflow-x: hidden;
+        background-color: #f8f9fa;
+    }
+    .dashboard-container {
+        min-height: 100vh;
+    }
+    .nav-wrapper {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background-color: #f8f9fa;
+        padding: 20px 0;
+        width: 100%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .nav-container {
+        background: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin: 0 20px;
+    }
+    .nav-pills {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .nav-pills .nav-item {
+        flex: 1;
+        display: flex;
+    }
+    .nav-pills .nav-link {
+        color: #495057;
+        padding: 12px 20px;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        font-size: 0.95rem;
+        text-align: center;
+        border: 1px solid transparent;
+    }
+    .nav-pills .nav-link i {
+        font-size: 1rem;
+    }
+    .nav-pills .nav-link:hover {
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+    .nav-pills .nav-link.active {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+    .content-wrapper {
+        padding: 20px;
+    }
+    .section-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-top: 20px;
+    }
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid #dee2e6;
+        padding: 1.5rem;
+    }
+    .table {
+        margin-bottom: 0;
+    }
+    .table th {
+        border-top: none;
+        background-color: #f8f9fa;
+    }
+    .btn-action {
+        padding: 8px 16px;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="container">
+    <!-- Navigation Pills -->
+    <div class="mb-4">
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link" href="#category-management" data-section="category-management">
+                    <i class="fas fa-folder"></i> Category Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#course-categories" data-section="course-categories">
+                    <i class="fas fa-book"></i> Course Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#question-management" data-section="question-management">
+                    <i class="fas fa-question-circle"></i> Question Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('manage_enrollments', _external=True) }}">
+                    <i class="fas fa-user-graduate"></i> Manage Enrollments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#day-control" data-section="day-control">
+                    <i class="fas fa-calendar-alt"></i> Day Control
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#question-tracking" data-section="question-tracking">
+                    <i class="fas fa-tasks"></i> Question Tracking
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="showSection('timer-settings')">
+                    <i class="fas fa-clock"></i> Timer Settings
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Day Control Section -->
+    <div id="day-control" class="section-card">
+        <div class="card mb-4">
+            <div class="card-body d-flex justify-content-center align-items-center">
+                <div class="text-center">
+                    <h4 class="mb-4">Current Day: <span id="current-day">{{ settings.active_day }}</span></h4>
+                    <form action="{{ url_for('update_active_day') }}" method="post" class="d-flex justify-content-center align-items-center">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="btn-group">
+                            <button type="submit" name="day" value="{{ settings.active_day - 1 if settings.active_day > 1 else 1 }}" 
+                                    class="btn btn-outline-primary" {{ 'disabled' if settings.active_day <= 1 }}>
+                                <i class="fas fa-minus"></i> Previous Day
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" disabled>
+                                Day {{ settings.active_day }}
+                            </button>
+                            <button type="submit" name="day" value="{{ settings.active_day + 1 if settings.active_day < 6 else 6 }}" 
+                                    class="btn btn-outline-primary" {{ 'disabled' if settings.active_day >= 6 }}>
+                                Next Day <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="progress" style="height: 30px;">
+                    {% for day in range(1, 7) %}
+                    <div class="progress-bar {{ 'bg-success' if day <= settings.active_day else 'bg-secondary' }}" 
+                         role="progressbar" 
+                         style="width: {{ 100/6 }}%;" 
+                         aria-valuenow="{{ day }}" 
+                         aria-valuemin="1" 
+                         aria-valuemax="6">
+                        Day {{ day }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Management Section -->
+    <div id="category-management" class="section-card">
+        <div class="card-header">
+            <h3 class="mb-0">Course Categories</h3>
+        </div>
+        <div class="card-body">
+            <!-- Add Category Form -->
+            <form action="{{ url_for('add_category') }}" method="POST" class="mb-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" name="category_name" class="form-control" placeholder="Category Name (e.g., DCA, PGDCA)" required>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" name="category_description" class="form-control" placeholder="Category Description">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Add Category</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Categories List -->
+            {% if categories %}
+            <div class="accordion" id="categoryAccordion">
+                {% for category in categories %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="categoryHeading{{ category.id }}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#categoryCollapse{{ category.id }}">
+                            {{ category.name }}
+                            <span class="badge bg-primary ms-2">{{ category.courses|length }} courses</span>
+                        </button>
+                    </h2>
+                    <div id="categoryCollapse{{ category.id }}" class="accordion-collapse collapse" 
+                         data-bs-parent="#categoryAccordion">
+                        <div class="accordion-body">
+                            {% if category.description %}
+                            <p class="text-muted">{{ category.description }}</p>
+                            {% endif %}
+                            
+                            <!-- Courses in this category -->
+                            <h5 class="mt-3">Courses</h5>
+                            {% if category.courses %}
+                            <div class="list-group">
+                                {% for course in category.courses %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ course.name }}</h6>
+                                        <div>
+                                            <span class="badge bg-info">{{ course.questions|length }} questions</span>
+                                            <span class="badge bg-success">{{ course.enrolled_students.count() }} students</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No courses in this category yet.</p>
+                            {% endif %}
+                            
+                            <!-- Add Course Form -->
+                            <button class="btn btn-success mt-3" type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#addCourse{{ category.id }}">
+                                <i class="fas fa-plus"></i> Add Course
+                            </button>
+                            <div class="collapse mt-3" id="addCourse{{ category.id }}">
+                                <div class="card card-body">
+                                    <form action="{{ url_for('add_course') }}" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="category_id" value="{{ category.id }}">
+                                        <div class="mb-3">
+                                            <label class="form-label">Course Name</label>
+                                            <input type="text" name="course_name" class="form-control" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Add Course</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <h4 class="alert-heading">No Categories</h4>
+                <p>No course categories have been added yet. Add a category to get started.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Course Categories Section -->
+    <div id="course-categories" class="section-card">
+        {% if courses %}
+            {% for course in courses %}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ course.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ course.description }}</p>
+                    
+                    <!-- Course Questions Section -->
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Questions for {{ course.name }}</h6>
+                            <button type="button" class="btn btn-success btn-sm" 
+                                    onclick="prepareAddQuestion('{{ course.id }}', '{{ course.name }}')"
+                                    data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                                <i class="fas fa-plus"></i> Add Question
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Day</th>
+                                        <th>Question</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for question in questions %}
+                                        {% if question.course_id == course.id %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td>Day {{ question.day }}</td>
+                                            <td>{{ question.question_text }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <p>No courses available.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Add Question Modal -->
+    <div class="modal fade" id="addQuestionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Question</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addQuestionForm" method="post" action="{{ url_for('add_question') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" id="course_id" name="course_id">
+                        
+                        <!-- Selected Course Display -->
+                        <div class="alert alert-info mb-3">
+                            Adding question for: <strong id="selectedCourseName"></strong>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="question_text" class="form-label">Question Text</label>
+                            <textarea class="form-control" id="question_text" name="question_text" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="option_a" class="form-label">Option A</label>
+                                <input type="text" class="form-control" id="option_a" name="option_a" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="option_b" class="form-label">Option B</label>
+                                <input type="text" class="form-control" id="option_b" name="option_b" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="option_c" class="form-label">Option C</label>
+                                <input type="text" class="form-control" id="option_c" name="option_c" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="option_d" class="form-label">Option D</label>
+                                <input type="text" class="form-control" id="option_d" name="option_d" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="correct_answer" class="form-label">Correct Answer</label>
+                                <select class="form-control" id="correct_answer" name="correct_answer" required>
+                                    <option value="">Select Answer</option>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="day" class="form-label">Day</label>
+                                <select class="form-control" id="day" name="day" required>
+                                    <option value="">Select Day</option>
+                                    {% for day in range(settings.active_day, 7) %}
+                                        <option value="{{ day }}">Day {{ day }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add Question</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Function to prepare Add Question modal
+    function prepareAddQuestion(courseId, courseName) {
+        document.getElementById('course_id').value = courseId;
+        document.getElementById('selectedCourseName').textContent = courseName;
+    }
+
+    // Add Question Form Submission
+    document.getElementById('addQuestionForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('{{ url_for("add_question") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addQuestionModal'));
+                modal.hide();
+                
+                // Show success message and reload page
+                alert('Question added successfully!');
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to add question');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while adding the question');
+        });
+    });
+    </script>
+
+    <!-- Question Management Section -->
+    <div id="question-management" class="section-card">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">Question Management</h3>
+            </div>
+            <div class="card-body">
+                <!-- Question List -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%">Course</th>
+                                <th style="width: 25%">Question</th>
+                                <th style="width: 30%">Options</th>
+                                <th style="width: 10%">Correct Answer</th>
+                                <th style="width: 10%">Day</th>
+                                <th style="width: 10%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for question in questions %}
+                            <tr>
+                                <td>
+                                    <span class="fw-medium">{{ question.course.name }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ question.course.category.name }}</small>
+                                </td>
+                                <td>
+                                    <p class="mb-0">{{ question.question_text }}</p>
+                                </td>
+                                <td>
+                                    <div class="options-grid">
+                                        <div class="option-item">
+                                            <span class="fw-bold">A:</span> {{ question.option_a }}
+                                        </div>
+                                        <div class="option-item">
+                                            <span class="fw-bold">B:</span> {{ question.option_b }}
+                                        </div>
+                                        <div class="option-item">
+                                            <span class="fw-bold">C:</span> {{ question.option_c }}
+                                        </div>
+                                        <div class="option-item">
+                                            <span class="fw-bold">D:</span> {{ question.option_d }}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ question.correct_answer }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if question.day == settings.active_day %}
+                                    <span class="badge bg-success">Day {{ question.day }}<br>(Active)</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Day {{ question.day }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button onclick="editQuestion({{ question.id }})" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <form action="{{ url_for('remove_question', question_id=question.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this question?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Results Section -->
+    <div id="student-results" class="section-card">
+        <div class="card-header">
+            <h3 class="mb-0">Student Results</h3>
+        </div>
+        <div class="card-body">
+            {% if results %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student_id, result in results.items() %}
+                                <tr>
+                                    <td>{{ result.username }}</td>
+                                    <td>{{ result.correct }}/{{ result.total }}</td>
+                                    <td>
+                                        {% if result.total > 0 %}
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ (result.correct / result.total * 100) | round(2) }}%"
+                                                     aria-valuenow="{{ (result.correct / result.total * 100) | round(2) }}"
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    {{ (result.correct / result.total * 100) | round(2) }}%
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.total > 0 %}
+                                            {% if (result.correct / result.total * 100) >= 60 %}
+                                                <span class="badge bg-success">Passed</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Failed</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-warning">Not Attempted</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">No Results</h4>
+                    <p>No students have taken the exam yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Question Tracking Section -->
+    <div id="question-tracking" class="section-card">
+        <div class="card-header">
+            <h3 class="mb-0">Question Tracking</h3>
+        </div>
+        <div class="card-body">
+            {% if answers %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student Name</th>
+                                <th>Question</th>
+                                <th>Selected Answer</th>
+                                <th>Correct Answer</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for answer in answers %}
+                                <tr>
+                                    <td>{{ answer.selection_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ answer.user.username }}</td>
+                                    <td>{{ answer.question.question_text }}</td>
+                                    <td>Option {{ answer.selected_answer }}</td>
+                                    <td>Option {{ answer.question.correct_answer }}</td>
+                                    <td>
+                                        {% if answer.selected_answer == answer.question.correct_answer %}
+                                            <span class="badge bg-success">Correct</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Incorrect</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">No Answers</h4>
+                    <p>No students have submitted any answers yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Timer Settings Section -->
+    <div id="timer-settings" class="section-card">
+        <div class="card-header">
+            <h3 class="mb-0">Exam Timer Settings</h3>
+        </div>
+        <div class="card-body">
+            <form id="timerSettingsForm" action="{{ url_for('update_timer') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label for="course" class="form-label">Select Course</label>
+                    <select class="form-select" id="course" name="course_id" required>
+                        <option value="">Choose a course...</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="duration" class="form-label">Exam Duration (minutes)</label>
+                    <input type="number" class="form-control" id="duration" name="duration_minutes" 
+                           min="1" max="480" required>
+                    <div class="form-text">Set the exam duration in minutes (max 8 hours)</div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Timer Settings</button>
+            </form>
+
+            <div class="mt-4">
+                <h4>Current Timer Settings</h4>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Duration</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            {% if course.timer %}
+                            <tr>
+                                <td>{{ course.name }}</td>
+                                <td>{{ course.timer.duration_minutes }} minutes</td>
+                                <td>{{ course.timer.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Load students and their enrollments
+    function loadEnrollments() {
+        fetch('{{ url_for("get_students") }}', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const tbody = document.getElementById('enrollmentTableBody');
+                tbody.innerHTML = '';
+                
+                data.students.forEach(student => {
+                    const row = document.createElement('tr');
+                    
+                    // Add student name cell
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = student.username;
+                    row.appendChild(nameCell);
+                    
+                    // Add enrollment status for each course
+                    {% for course in courses %}
+                    const courseCell = document.createElement('td');
+                    const enrolled = student.courses.some(c => c.id === {{ course.id }});
+                    
+                    const button = document.createElement('button');
+                    button.className = `btn btn-sm ${enrolled ? 'btn-danger' : 'btn-success'}`;
+                    button.textContent = enrolled ? 'Unenroll' : 'Enroll';
+                    button.onclick = () => {
+                        const url = enrolled ? 
+                            '{{ url_for("unenroll_student") }}' : 
+                            '{{ url_for("enroll_student") }}';
+                            
+                        const formData = new FormData();
+                        formData.append('student_id', student.id);
+                        formData.append('course_id', '{{ course.id }}');
+                        formData.append('csrf_token', '{{ csrf_token() }}');
+                        
+                        fetch(url, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            credentials: 'same-origin'
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                loadEnrollments();  // Refresh the table
+                            } else {
+                                alert(result.message || 'Failed to update enrollment');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while updating enrollment');
+                        });
+                    };
+                    
+                    courseCell.appendChild(button);
+                    row.appendChild(courseCell);
+                    {% endfor %}
+                    
+                    tbody.appendChild(row);
+                });
+            } else {
+                alert(data.message || 'Failed to load students');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while loading students');
+        });
+    }
+
+    // Load enrollments when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('enrollmentTable')) {
+            loadEnrollments();
+        }
+    });
+    </script>
+
+    <div class="modal fade" id="editQuestionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Question</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editQuestionForm" onsubmit="submitEditForm(event)">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" id="edit_question_id" name="question_id">
+                        <div class="mb-3">
+                            <label class="form-label">Question Text</label>
+                            <textarea name="question_text" id="edit_question_text" class="form-control" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Option A</label>
+                                <input type="text" name="option_a" id="edit_option_a" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Option B</label>
+                                <input type="text" name="option_b" id="edit_option_b" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Option C</label>
+                                <input type="text" name="option_c" id="edit_option_c" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Option D</label>
+                                <input type="text" name="option_d" id="edit_option_d" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Correct Answer</label>
+                                <select name="correct_answer" id="edit_correct_answer" class="form-control" required>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Day</label>
+                                <input type="number" name="day" id="edit_day" class="form-control" min="1" max="6" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function showMessage(message, type = 'success') {
+        // First try to find existing flash container
+        let flashContainer = document.getElementById('flash-messages');
+        
+        // If it doesn't exist, create it
+        if (!flashContainer) {
+            flashContainer = document.createElement('div');
+            flashContainer.id = 'flash-messages';
+            flashContainer.className = 'position-fixed top-0 end-0 p-3';
+            document.body.appendChild(flashContainer);
+        }
+        
+        // Create the message element
+        const flashMessage = document.createElement('div');
+        flashMessage.className = `alert alert-${type} alert-dismissible fade show`;
+        flashMessage.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Add the message to the container
+        flashContainer.appendChild(flashMessage);
+        
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+            if (flashMessage && flashMessage.parentNode) {
+                flashMessage.remove();
+            }
+        }, 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set initial active section from URL hash or default to category-management
+        const hash = window.location.hash.substring(1) || 'category-management';
+        showSection(hash);
+
+        // Add click handlers for nav links
+        document.querySelectorAll('.nav-link[data-section]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sectionId = this.getAttribute('data-section');
+                showSection(sectionId);
+                window.location.hash = sectionId;
+            });
+        });
+    });
+
+    function showSection(sectionId) {
+        // Hide all sections
+        document.querySelectorAll('.section-card').forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // Remove active class from all nav links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // Show selected section
+        const selectedSection = document.getElementById(sectionId);
+        if (selectedSection) {
+            selectedSection.style.display = 'block';
+            // Activate corresponding nav link
+            const navLink = document.querySelector(`.nav-link[data-section="${sectionId}"]`);
+            if (navLink) {
+                navLink.classList.add('active');
+            }
+        }
+    }
+
+    function editQuestion(id) {
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        
+        fetch(`/edit_question/${id}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Failed to fetch question data');
+                    });
+                }
+                throw new Error('Server error occurred');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const question = data.question;
+                
+                // Populate modal fields
+                document.getElementById('edit_question_id').value = question.id;
+                document.getElementById('edit_question_text').value = question.question_text;
+                document.getElementById('edit_option_a').value = question.option_a;
+                document.getElementById('edit_option_b').value = question.option_b;
+                document.getElementById('edit_option_c').value = question.option_c;
+                document.getElementById('edit_option_d').value = question.option_d;
+                document.getElementById('edit_correct_answer').value = question.correct_answer;
+                document.getElementById('edit_day').value = question.day;
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('editQuestionModal'));
+                modal.show();
+            } else {
+                alert(data.message || 'Failed to fetch question data');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(error.message || 'Failed to fetch question data. Please try again.');
+        });
+    }
+
+    function submitEditForm(event) {
+        event.preventDefault();
+        
+        const form = document.getElementById('editQuestionForm');
+        const formData = new FormData(form);
+        const questionId = document.getElementById('edit_question_id').value;
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        
+        fetch(`/edit_question/${questionId}`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Failed to update question');
+                    });
+                }
+                throw new Error('Server error occurred');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editQuestionModal'));
+                modal.hide();
+                
+                // Show success message
+                showMessage(data.message || 'Question updated successfully');
+                
+                // Reload page after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showMessage(data.message || 'Failed to update question', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage(error.message || 'An error occurred while updating the question. Please try again.', 'danger');
+        });
+    }
+
+    // Add event listener when document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const editForm = document.getElementById('editQuestionForm');
+        if (editForm) {
+            editForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                submitEditForm(event);
+            });
+        }
+        
+        // Add event listener for day input validation
+        const dayInput = document.getElementById('edit_day');
+        if (dayInput) {
+            dayInput.addEventListener('change', function() {
+                const activeDay = parseInt("{{ settings.active_day }}");
+                const selectedDay = parseInt(this.value);
+                if (selectedDay < activeDay) {
+                    alert(`Cannot set day to a past day. Current active day is ${activeDay}`);
+                    this.value = activeDay;
+                }
+            });
+        }
+    });
+    </script>
+
+    {% endblock %}
+
+    {% block scripts %}
+    {{ super() }}
+    {% endblock %}
