@@ -3,30 +3,373 @@
 {% block title %}Welcome{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8 text-center">
-            <h1 class="mb-4">Welcome to Online Examination System</h1>
-            
+<style>
+    :root {
+        --primary: #2196f3;
+        --primary-light: #e3f2fd;
+        --primary-dark: #1976d2;
+        --accent: #ff4081;
+        --text: #2c3e50;
+        --text-light: #546e7a;
+        --bg-light: #f8f9fa;
+        --white: #ffffff;
+    }
+
+    .main-container {
+        min-height: 100vh;
+        margin: -2rem -15px 0;
+        padding: 2rem 15px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--primary-light), #ffffff);
+    }
+
+    .falling-symbols {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        width: 200px;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .falling-symbols.left { left: 0; }
+    .falling-symbols.right { right: 0; }
+
+    .symbol {
+        position: absolute;
+        color: rgba(33, 150, 243, 0.1);
+        font-family: 'Courier New', monospace;
+        font-size: 1.2rem;
+        animation: fall linear infinite;
+        white-space: nowrap;
+    }
+
+    @keyframes fall {
+        0% {
+            transform: translateY(-100%) rotate(0deg);
+            opacity: 0;
+        }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .content-wrapper {
+        position: relative;
+        z-index: 2;
+        max-width: 1000px;
+        margin: 0 auto;
+        background: var(--white);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    .title-section {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+        color: var(--primary);
+        position: relative;
+        display: inline-block;
+    }
+
+    .main-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary), var(--accent));
+        border-radius: 2px;
+    }
+
+    .guidelines-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    .guideline-box {
+        background: var(--bg-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .guideline-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+
+    .guideline-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .guideline-box:hover::before {
+        transform: scaleY(1);
+    }
+
+    .guideline-icon {
+        font-size: 2rem;
+        color: var(--primary);
+        transition: transform 0.3s ease;
+    }
+
+    .guideline-box:hover .guideline-icon {
+        transform: scale(1.2);
+    }
+
+    .guideline-text {
+        color: var(--text);
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .good-luck-section {
+        text-align: center;
+        padding: 2rem;
+        background: var(--primary-light);
+        border-radius: 15px;
+        margin: 2.5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .good-luck-text {
+        color: var(--primary-dark);
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .action-section {
+        text-align: center;
+        margin-top: 2.5rem;
+    }
+
+    .action-btn {
+        background: var(--primary);
+        color: var(--white);
+        border: none;
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+    }
+
+    .action-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        padding-right: 3rem;
+    }
+
+    .action-btn::after {
+        content: '→';
+        position: absolute;
+        right: 1.5rem;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover::after {
+        opacity: 1;
+    }
+
+    .login-message {
+        margin-top: 1rem;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .guideline-box {
+        animation: fadeInUp 0.5s ease forwards;
+        opacity: 0;
+    }
+
+    .guideline-box:nth-child(1) { animation-delay: 0.1s; }
+    .guideline-box:nth-child(2) { animation-delay: 0.2s; }
+    .guideline-box:nth-child(3) { animation-delay: 0.3s; }
+    .guideline-box:nth-child(4) { animation-delay: 0.4s; }
+    .guideline-box:nth-child(5) { animation-delay: 0.5s; }
+    .guideline-box:nth-child(6) { animation-delay: 0.6s; }
+</style>
+
+<div class="main-container">
+    <div class="falling-symbols left"></div>
+    <div class="falling-symbols right"></div>
+    <div class="content-wrapper">
+        <div class="title-section">
+            <h1 class="main-title">📝 Student Exam Guidelines</h1>
+        </div>
+
+        <div class="guidelines-container">
+            <div class="guideline-box">
+                <div class="guideline-icon">⚠️</div>
+                <p class="guideline-text">Cheating or impersonation will result in immediate disqualification</p>
+            </div>
+
+            <div class="guideline-box">
+                <div class="guideline-icon">🎫</div>
+                <p class="guideline-text">Admit card and valid ID proof are mandatory - entry will not be allowed without both documents</p>
+            </div>
+
+            <div class="guideline-box">
+                <div class="guideline-icon">💻</div>
+                <p class="guideline-text">Use only approved device and browser - no tab switching</p>
+            </div>
+
+            <div class="guideline-box">
+                <div class="guideline-icon">⏰</div>
+                <p class="guideline-text">Submit all answers within the allocated time limit</p>
+            </div>
+
+            <div class="guideline-box">
+                <div class="guideline-icon">🔔</div>
+                <p class="guideline-text">Report any technical issues immediately to avoid time loss</p>
+            </div>
+
+            <div class="guideline-box">
+                <div class="guideline-icon">⚡</div>
+                <p class="guideline-text">Strict penalties apply for any suspicious activity</p>
+            </div>
+        </div>
+
+        <div class="good-luck-section">
+            <p class="good-luck-text">✨ Stay honest, disciplined, and focused—best of luck! 🍀</p>
+        </div>
+
+        <div class="action-section">
             {% if current_user.is_authenticated %}
                 {% if current_user.is_teacher %}
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-primary btn-lg">Go to Teacher Dashboard</a>
-                    </div>
+                    <a href="{{ url_for('teacher_dashboard') }}" class="action-btn">
+                        Go to Teacher Dashboard
+                    </a>
                 {% else %}
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('exam') }}" class="btn btn-primary btn-lg">Start Exam</a>
-                    </div>
+                    <a href="{{ url_for('exam') }}" class="action-btn">
+                        Start Exam
+                    </a>
                 {% endif %}
             {% else %}
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Login</a>
-                </div>
-                <div class="mt-3">
-                    <p class="text-muted">Please contact your administrator for login credentials.</p>
+                <a href="{{ url_for('login') }}" class="action-btn">Login</a>
+                <div class="login-message">
+                    <p class="mb-0">Please contact your administrator for login credentials.</p>
                 </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<script>
+const mathSymbols = [
+    '2 + 2 = 4',
+    'E = mc²',
+    'a² + b² = c²',
+    '∫ dx',
+    '∑ x_i',
+    'π r²',
+    'x = -b ± √(b² - 4ac)/2a',
+    'sin(θ)',
+    'cos(θ)',
+    'log(x)',
+    '∞',
+    '∂/∂x',
+    '±',
+    '≠',
+    '≈',
+    '∏',
+    'Δx',
+    '√',
+    'lim x→∞',
+    'dy/dx'
+];
+
+function createSymbol(container, isLeft) {
+    const symbol = document.createElement('div');
+    symbol.className = 'symbol';
+    symbol.textContent = mathSymbols[Math.floor(Math.random() * mathSymbols.length)];
+    
+    const xPos = Math.random() * 150;
+    symbol.style.left = isLeft ? `${xPos}px` : `${xPos}px`;
+    
+    const duration = 5 + Math.random() * 10;
+    symbol.style.animationDuration = `${duration}s`;
+    
+    const size = 12 + Math.random() * 12;
+    symbol.style.fontSize = `${size}px`;
+    
+    symbol.style.opacity = 0.1 + Math.random() * 0.2;
+    
+    container.appendChild(symbol);
+    
+    setTimeout(() => {
+        symbol.remove();
+    }, duration * 1000);
+}
+
+function startFallingSymbols() {
+    const leftContainer = document.querySelector('.falling-symbols.left');
+    const rightContainer = document.querySelector('.falling-symbols.right');
+    
+    setInterval(() => {
+        createSymbol(leftContainer, true);
+        createSymbol(rightContainer, false);
+    }, 1000);
+    
+    for (let i = 0; i < 10; i++) {
+        createSymbol(leftContainer, true);
+        createSymbol(rightContainer, false);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    startFallingSymbols();
+});
+</script>
 {% endblock %}

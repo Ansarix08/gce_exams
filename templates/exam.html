@@ -1,225 +1,983 @@
 {% extends "base.html" %}
 
-{% block title %}Take Exam{% endblock %}
-
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Day {{ settings.active_day }} Exam</h2>
-        <div id="exam-timer" class="text-end">
-            <h4 class="mb-0 text-primary">Time Remaining</h4>
-            <div id="timer-display" class="display-6 fw-bold">--:--:--</div>
-        </div>
-    </div>
-
-    <!-- Questions Section -->
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Questions</h4>
-        </div>
-        <div class="card-body" style="background-color: #f8f9fa; border: 1px solid #ddd;">
-            {% if questions %}
-                <div class="row gy-4">
+<div class="classic-exam">
+    <div class="questions-section">
+        <div class="container py-4">
+            <!-- Header Section -->
+            
+            <!-- Questions Section -->
+            <div class="questions-container">
+                {% if questions %}
                     {% for question in questions %}
-                        <div class="col-12">
-                            <div class="p-4 border rounded shadow-sm bg-white">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div>
-                                        <h5 class="mb-0">Question {{ loop.index }}</h5>
-                                        <small class="text-muted">Course: {{ question.course.name }}</small>
-                                    </div>
-                                    {% if question.id in answered_question_ids %}
-                                        <span class="badge bg-success px-3 py-2">Completed</span>
-                                    {% else %}
-                                        <span class="badge bg-warning px-3 py-2">Pending</span>
-                                    {% endif %}
+                        <div class="question-paper animate__animated animate__fadeIn" style="animation-delay: {{ loop.index * 0.2 }}s">
+                            <div class="question-header">
+                                <div class="question-info">
+                                    <div class="number">Question {{ loop.index }}</div>
+                                    <div class="subject">{{ question.course.name }}</div>
                                 </div>
-                                <p class="mb-4">{{ question.question_text }}</p>
+                                {% if question.id in answered_question_ids %}
+                                    <div class="status answered">
+                                        <i class="fas fa-check"></i> Answered
+                                    </div>
+                                {% else %}
+                                    <div class="status unanswered">
+                                        <i class="fas fa-circle"></i> Not Answered
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="question-content">
+                                <div class="question-text">{{ question.question_text }}</div>
 
                                 {% if question.id not in answered_question_ids %}
-                                    <form method="POST" action="{{ url_for('submit_answer') }}">
+                                    <form method="POST" action="{{ url_for('submit_answer') }}" class="answer-form">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="question_id" value="{{ question.id }}">
 
-                                        <div class="mb-3">
+                                        <div class="options-list">
                                             {% for option, text in [
                                                 ('A', question.option_a),
                                                 ('B', question.option_b),
                                                 ('C', question.option_c),
                                                 ('D', question.option_d)
                                             ] %}
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="answer" id="option{{ loop.index }}_{{ question.id }}" value="{{ option }}" required>
-                                                    <label class="form-check-label d-block px-3 py-2 rounded" for="option{{ loop.index }}_{{ question.id }}" style="border: 1px solid #ddd; transition: background-color 0.3s;">
-                                                        {{ option }}) {{ text }}
-                                                    </label>
-                                                </div>
+                                                <label class="option animate__animated animate__fadeInRight" style="animation-delay: {{ loop.index * 0.1 }}s">
+                                                    <input type="radio" name="answer" value="{{ option }}" required>
+                                                    <div class="selection-indicator"></div>
+                                                    <div class="fill-animation"></div>
+                                                    <span class="option-label">
+                                                        <span class="option-marker">{{ option }}</span>
+                                                        <span class="option-text">{{ text }}</span>
+                                                    </span>
+                                                </label>
                                             {% endfor %}
                                         </div>
 
-                                        <button type="submit" class="btn btn-primary">Submit Answer</button>
+                                        <div class="action-area">
+                                            <button type="submit" class="btn-classic animate__animated animate__fadeInUp">
+                                                Submit Answer
+                                            </button>
+                                        </div>
                                     </form>
                                 {% else %}
                                     {% set user_answer = get_answer(current_user.id, question.id) %}
                                     {% if not exam_submitted %}
-                                        <form method="POST" action="{{ url_for('edit_answer') }}" class="mt-3">
+                                        {% if user_answer %}
+                                            <form method="POST" action="{{ url_for('edit_answer') }}" class="answer-form">
+                                        {% else %}
+                                            <form method="POST" action="{{ url_for('submit_answer') }}" class="answer-form">
+                                        {% endif %}
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="question_id" value="{{ question.id }}">
 
-                                            <div class="mb-3">
+                                            <div class="options-list">
                                                 {% for option, text in [
                                                     ('A', question.option_a),
                                                     ('B', question.option_b),
                                                     ('C', question.option_c),
                                                     ('D', question.option_d)
                                                 ] %}
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="answer" 
-                                                               id="edit_option{{ loop.index }}_{{ question.id }}" 
+                                                    <label class="option animate__animated animate__fadeInRight" style="animation-delay: {{ loop.index * 0.1 }}s">
+                                                        <input type="radio" name="answer" 
                                                                value="{{ option }}"
                                                                {% if user_answer and user_answer.selected_answer == option %}checked{% endif %}
                                                                required>
-                                                        <label class="form-check-label d-block px-3 py-2 rounded" for="edit_option{{ loop.index }}_{{ question.id }}" style="border: 1px solid #ddd; transition: background-color 0.3s;">
-                                                            {{ option }}) {{ text }}
-                                                        </label>
-                                                    </div>
+                                                        <div class="selection-indicator"></div>
+                                                        <div class="fill-animation"></div>
+                                                        <span class="option-label">
+                                                            <span class="option-marker">{{ option }}</span>
+                                                            <span class="option-text">{{ text }}</span>
+                                                        </span>
+                                                    </label>
                                                 {% endfor %}
                                             </div>
 
-                                            <button type="submit" class="btn btn-warning">
-                                                <i class="fas fa-edit"></i> Edit Answer
-                                            </button>
-                                        </form>
-                                    {% else %}
-                                        <div class="mt-3">
-                                            <div class="mb-3">
-                                                {% for option, text in [
-                                                    ('A', question.option_a),
-                                                    ('B', question.option_b),
-                                                    ('C', question.option_c),
-                                                    ('D', question.option_d)
-                                                ] %}
-                                                    <div class="form-check">
-                                                        <div class="d-block px-3 py-2 rounded {% if user_answer and user_answer.selected_answer == option %}bg-light border{% endif %}" style="border: 1px solid #ddd;">
-                                                            {{ option }}) {{ text }}
-                                                            {% if user_answer and user_answer.selected_answer == option %}
-                                                                <span class="badge bg-primary float-end">Your Answer</span>
-                                                            {% endif %}
-                                                        </div>
-                                                    </div>
-                                                {% endfor %}
+                                            <div class="action-area">
+                                                {% if user_answer %}
+                                                    <button type="submit" class="btn-classic secondary animate__animated animate__fadeInUp">
+                                                        Edit Answer
+                                                    </button>
+                                                {% else %}
+                                                    <button type="submit" class="btn-classic animate__animated animate__fadeInUp">
+                                                        Submit Answer
+                                                    </button>
+                                                {% endif %}
                                             </div>
-                                        </div>
+                                        </form>
                                     {% endif %}
                                 {% endif %}
                             </div>
                         </div>
                     {% endfor %}
-                </div>
-            {% else %}
-                <div class="alert alert-info text-center">
-                    <h4>No Questions Available</h4>
-                    <p>Please contact your teacher to add questions.</p>
-                </div>
-            {% endif %}
 
-            {% if questions and questions|length == answered_question_ids|length %}
-                <div class="text-center mt-4">
-                    <form method="POST" action="{{ url_for('submit_exam') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-lg btn-success">
-                            <i class="fas fa-paper-plane"></i> Submit Exam
-                        </button>
-                    </form>
-                </div>
-            {% endif %}
+                    {% if questions|length == answered_question_ids|length %}
+                        <div class="final-submission animate__animated animate__fadeInUp">
+                            <form method="POST" action="{{ url_for('submit_exam') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn-classic primary">
+                                    Submit Examination
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="empty-state animate__animated animate__fadeIn">
+                        <div class="message">
+                            <i class="fas fa-book"></i>
+                            <h2>No Questions Available</h2>
+                            <p>Please contact your instructor to add questions.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="timer-container">
+        <div class="compact-timer">
+            <i class="fas fa-clock"></i>
+            <div id="timer-display">
+                {% for course_id, timer in course_timers.items() %}
+                    <span class="course-time" data-minutes="{{ timer.duration_minutes }}" data-course-id="{{ course_id }}">
+                        {{ timer.duration_minutes }}:00
+                    </span>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    .form-check-label:hover {
-        background-color: #f1f1f1;
+    @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@600;700&display=swap');
+
+    body {
+        font-family: 'Source Sans Pro', sans-serif;
+        font-weight: 600;
+    }
+
+    .classic-exam {
+        background-color: #F5F9FF;
+        min-height: 100vh;
+        padding: 1rem;
+        position: relative;
+    }
+
+    .timer-container {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        z-index: 1000;
+        background: linear-gradient(145deg, #2b3a67, #1a237e);
+        border-radius: 12px;
+        padding: 12px 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        transform: translateY(0);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        max-width: 200px;
+    }
+
+    .timer-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .compact-timer {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: white;
+    }
+
+    .compact-timer i {
+        font-size: 1.4rem;
+        color: #64ffda;
+        animation: pulse 2s infinite;
+        text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+    }
+
+    #timer-display {
+        font-family: 'Source Sans Pro', monospace;
+        font-size: 1.2rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .course-time {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .course-time::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .course-time:hover::before {
+        transform: translateX(100%);
+    }
+
+    .course-time.warning {
+        background: linear-gradient(45deg, #ff9800, #f57c00);
+        color: white;
+        animation: blink 1.5s infinite;
+        box-shadow: 0 0 15px rgba(255, 152, 0, 0.4);
+    }
+
+    .course-time.danger {
+        background: linear-gradient(45deg, #f44336, #d32f2f);
+        color: white;
+        animation: blink 0.8s infinite;
+        box-shadow: 0 0 20px rgba(244, 67, 54, 0.4);
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes blink {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(0.98); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+
+    .question-paper {
+        background: #FFFFFF;
+        border-left: 4px solid #2196F3;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: top;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .question-paper:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+        border-left-color: #64B5F6;
+    }
+
+    .question-header {
+        background: #F8FBFF;
+        padding: 0.75rem 1rem;
+        border-radius: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #E3F2FD;
+        transition: background-color 0.3s ease;
+    }
+
+    .question-paper:hover .question-header {
+        background: #E3F2FD;
+    }
+
+    .question-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .number {
+        font-family: 'Source Sans Pro', sans-serif;
+        font-weight: 700;
+        color: #2196F3;
+        font-size: 1rem;
+        transition: color 0.3s ease;
+    }
+
+    .question-paper:hover .number {
+        color: #1976D2;
+    }
+
+    .subject {
+        color: #4A4E69;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .status {
+        padding: 0.4rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.3s ease;
+    }
+
+    .status.answered {
+        background: #4CAF50;
+        color: white;
+    }
+
+    .status.unanswered {
+        background: #FFA726;
+        color: white;
+    }
+
+    .status:hover {
+        transform: scale(1.05);
+    }
+
+    .question-content {
+        padding: 0.8rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(to right, rgba(33, 150, 243, 0.03), transparent);
+    }
+
+    .question-paper:hover .question-content {
+        padding: 1rem;
+        background: linear-gradient(to right, rgba(33, 150, 243, 0.06), transparent);
+    }
+
+    .question-text {
+        font-size: 0.95rem;
+        line-height: 1.4;
+        margin-bottom: 1.2rem;
+        color: #2C3E50;
+        font-weight: 600;
+        position: relative;
+        padding-left: 1.5rem;
+        transform: translateX(0);
+        transition: all 0.3s ease;
+    }
+
+    .question-text::before {
+        content: "Q";
+        position: absolute;
+        left: 0;
+        top: 0;
+        color: #2196F3;
+        font-weight: 700;
+        font-size: 0.9rem;
+        opacity: 0.7;
+        transition: all 0.3s ease;
+    }
+
+    .question-paper:hover .question-text {
+        transform: translateX(5px);
+    }
+
+    .question-paper:hover .question-text::before {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    /* Options - Updated Design */
+    .options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .option {
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        margin: 0.5rem 0;
+        border-radius: 8px;
         cursor: pointer;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
     }
 
-    .form-check-input:checked + .form-check-label {
-        background-color: #d1e7dd; /* Light green */
-        border-color: #0f5132;
-        color: #0f5132;
+    .option input[type="radio"] {
+        display: none;
     }
 
-    .option-selected {
-        background-color: #d1e7dd;
-        border-color: #0f5132;
-        color: #0f5132;
+    .selection-indicator {
+        position: absolute;
+        left: 1rem;
+        width: 24px;
+        height: 24px;
+        border: 2px solid #ddd;
+        border-radius: 50%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: scale(0.8);
+    }
+
+    .option input[type="radio"]:checked + .selection-indicator {
+        background-color: #4CAF50;
+        border-color: #4CAF50;
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    }
+
+    .option input[type="radio"]:checked ~ .fill-animation {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    .fill-animation {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(76, 175, 80, 0.15);
+        transform: scale(0.95);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: -1;
+    }
+
+    .option-label {
+        margin-left: 2.5rem;
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+
+    .option input[type="radio"]:checked ~ .option-label {
+        color: #2E7D32;
+        font-weight: 600;
+        transform: translateX(5px);
+    }
+
+    .option:hover {
+        background-color: rgba(76, 175, 80, 0.05);
+        transform: translateX(5px);
+    }
+
+    .option input[type="radio"]:checked ~ .option {
+        border-color: #4CAF50;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+    }
+
+    .option input[type="radio"]:checked + .selection-indicator {
+        animation: pulse 1.5s infinite;
+    }
+
+    /* Buttons */
+    .action-area {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .btn-classic {
+        background: linear-gradient(135deg, #2196F3, #64B5F6);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        font-size: 1rem;
+        font-weight: 500;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
+    }
+
+    .btn-classic:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+        background: linear-gradient(135deg, #64B5F6, #2196F3);
+    }
+
+    .btn-classic.secondary {
+        background: linear-gradient(135deg, #64B5F6, #2196F3);
+    }
+
+    .btn-classic.primary {
+        font-size: 1.2rem;
+        padding: 1rem 3rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        background: #FFFFFF;
+        padding: 4rem 2rem;
+        text-align: center;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: #2196F3;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h2 {
+        font-family: 'Source Sans Pro', sans-serif;
+        color: #1B1B1E;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: #4A4E69;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .timer-container {
+            position: sticky;
+            bottom: 0.5rem;
+            right: auto;
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 1rem;
+            margin-bottom: 1rem;
+            background: transparent;
+        }
+
+        .questions-section {
+            max-width: 100%;
+            padding-top: 0;
+        }
+    }
+
+    @media (max-width: 1200px) {
+        .timer-container {
+            position: sticky;
+            bottom: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .timer-box {
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        .questions-section {
+            max-width: 100%;
+        }
+    }
+
+    /* Adjust questions section to accommodate timer */
+    .questions-section {
+        margin-right: 0;
+        padding-bottom: 100px;
+        position: relative;
+    }
+
+    /* Notification styles */
+    .notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+
+    .notification {
+        background: white;
+        border-radius: 8px;
+        padding: 15px 25px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideIn 0.3s ease-out;
+        max-width: 350px;
+    }
+
+    .notification.success {
+        border-left: 4px solid #4CAF50;
+    }
+
+    .notification.error {
+        border-left: 4px solid #f44336;
+    }
+
+    .notification i {
+        font-size: 20px;
+    }
+
+    .notification.success i {
+        color: #4CAF50;
+    }
+
+    .notification.error i {
+        color: #f44336;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
     }
 </style>
 
 <script>
-    // Timer functionality
-    let courseTimers = {{ course_timers|tojson }};
-    let startTime = new Date();
-    let maxDuration = 0;
-
-    for (let courseId in courseTimers) {
-        if (courseTimers[courseId] && courseTimers[courseId].duration_minutes > maxDuration) {
-            maxDuration = courseTimers[courseId].duration_minutes;
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    const timerDisplay = document.getElementById('timer-display');
+    const courseTimers = document.querySelectorAll('.course-time');
+    
+    function clearTimerStorage(courseId) {
+        // Clear all timer-related localStorage items for this course
+        const keyPrefix = `examTimer_${courseId}`;
+        localStorage.removeItem(`${keyPrefix}_v2`);
+        localStorage.removeItem(`${keyPrefix}_startTime`);
+        localStorage.removeItem(`${keyPrefix}_lastActive`);
     }
-
-    if (maxDuration === 0) {
-        maxDuration = 180;
-    }
-
-    function updateTimer() {
-        const now = new Date();
-        const elapsedMinutes = (now - startTime) / 1000 / 60;
-        const remainingMinutes = maxDuration - elapsedMinutes;
-
-        if (remainingMinutes <= 0) {
-            document.getElementById('timer-display').innerHTML = "00:00:00";
-            document.getElementById('timer-display').classList.add('text-danger');
-            const submitForm = document.querySelector('form[action="{{ url_for('submit_exam') }}"]');
-            if (submitForm) {
-                submitForm.submit();
-            } else {
-                alert("Time's up! Please submit your exam.");
+    
+    courseTimers.forEach(async timer => {
+        const minutes = parseInt(timer.dataset.minutes);
+        const courseId = timer.dataset.courseId;
+        const storageKey = `examTimer_${courseId}_v2`;
+        
+        let timeLeft;
+        const savedTime = localStorage.getItem(storageKey);
+        const startTime = localStorage.getItem(`${storageKey}_startTime`);
+        
+        if (savedTime && startTime) {
+            const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000);
+            timeLeft = Math.max(0, minutes * 60 - elapsed);
+            
+            // If timer has expired, clear storage
+            if (timeLeft <= 0) {
+                clearTimerStorage(courseId);
+                timeLeft = minutes * 60;
             }
-            return;
+        } else {
+            timeLeft = minutes * 60;
+            const now = Date.now();
+            localStorage.setItem(storageKey, timeLeft);
+            localStorage.setItem(`${storageKey}_startTime`, now);
         }
 
-        const hours = Math.floor(remainingMinutes / 60);
-        const minutes = Math.floor(remainingMinutes % 60);
-        const seconds = Math.floor((remainingMinutes * 60) % 60);
-
-        const display = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        document.getElementById('timer-display').innerHTML = display;
-
-        if (remainingMinutes <= 5) {
-            document.getElementById('timer-display').classList.add('text-danger');
-            document.getElementById('timer-display').classList.add('blink');
-        } else if (remainingMinutes <= 15) {
-            document.getElementById('timer-display').classList.add('text-warning');
+        let displayValue = timeLeft;
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
+
+        function smoothCountDown(current, target, duration = 1000) {
+            const start = current;
+            const change = target - start;
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function for smooth animation
+                const easeOut = t => 1 - Math.pow(1 - t, 3);
+                const currentValue = start + change * easeOut(progress);
+                
+                displayValue = Math.ceil(currentValue);
+                timer.textContent = formatTime(displayValue);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    displayValue = target;
+                    timer.textContent = formatTime(target);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        function updateTimerStyle() {
+            timer.classList.remove('warning', 'danger');
+            if (timeLeft <= 60) {
+                timer.classList.add('danger');
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(200);
+                }
+            } else if (timeLeft <= 180) {
+                timer.classList.add('warning');
+            }
+        }
+
+        function tick() {
+            if (timeLeft <= 0) {
+                timer.textContent = "Time's Up!";
+                timer.classList.add('danger');
+                clearTimerStorage(courseId);
+                const form = document.querySelector('form[action*="submit_exam"]');
+                if (form) {
+                    setTimeout(() => form.submit(), 1000);
+                }
+                return;
+            }
+
+            const nextValue = timeLeft - 1;
+            smoothCountDown(displayValue, nextValue);
+            timeLeft = nextValue;
+            
+            updateTimerStyle();
+            localStorage.setItem(storageKey, timeLeft);
+            
+            setTimeout(tick, 1000);
+        }
+
+        // Handle visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                const startTime = localStorage.getItem(`${storageKey}_startTime`);
+                if (startTime) {
+                    const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000);
+                    const newTimeLeft = Math.max(0, minutes * 60 - elapsed);
+                    
+                    // If timer has expired while page was hidden
+                    if (newTimeLeft <= 0) {
+                        clearTimerStorage(courseId);
+                        timer.textContent = "Time's Up!";
+                        timer.classList.add('danger');
+                        const form = document.querySelector('form[action*="submit_exam"]');
+                        if (form) form.submit();
+                        return;
+                    }
+                    
+                    timeLeft = newTimeLeft;
+                    displayValue = timeLeft;
+                    timer.textContent = formatTime(timeLeft);
+                    updateTimerStyle();
+                }
+            }
+        });
+
+        timer.textContent = formatTime(timeLeft);
+        tick();
+    });
+
+    // Add event listener for storage changes
+    window.addEventListener('storage', function(e) {
+        if (e.key && e.key.startsWith('examTimer_')) {
+            location.reload(); // Reload to sync timer state across tabs
+        }
+    });
+    
+    // Notification function
+    function showNotification(message, type = 'success') {
+        const container = document.getElementById('notificationContainer');
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        
+        const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+        notification.innerHTML = `
+            <i class="fas fa-${icon}"></i>
+            <div class="notification-message">${message}</div>
+        `;
+        
+        container.appendChild(notification);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                container.removeChild(notification);
+            }, 300);
+        }, 3000);
     }
 
-    setInterval(updateTimer, 1000);
-
-    // Option selection highlighting
-    document.addEventListener("DOMContentLoaded", function () {
-        const options = document.querySelectorAll(".form-check-input");
-
-        options.forEach(option => {
-            option.addEventListener("change", function () {
-                const parent = this.closest(".mb-3");
-                parent.querySelectorAll(".form-check").forEach(el => {
-                    el.classList.remove("option-selected");
+    // Handle answer form submissions
+    document.querySelectorAll('.answer-form').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            const isEdit = this.action.includes('edit_answer');
+            
+            // Store the current question's position
+            const currentQuestion = this.closest('.question-paper');
+            const scrollOffset = currentQuestion.offsetTop;
+            
+            try {
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                submitButton.disabled = true;
+                
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 });
+                
+                if (response.ok) {
+                    // Show success notification
+                    const message = isEdit ? 
+                        'Answer successfully updated!' : 
+                        'Answer successfully submitted!';
+                    showNotification(message, 'success');
+                    
+                    // Get the new content
+                    const newContent = await response.text();
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = newContent;
+                    
+                    // Find the corresponding new question in the response
+                    const newQuestionsContainer = tempDiv.querySelector('.questions-container');
+                    if (newQuestionsContainer) {
+                        // Only update the current question's content
+                        const questionId = formData.get('question_id');
+                        const newQuestion = newQuestionsContainer.querySelector(
+                            `.question-paper:has(input[value="${questionId}"])`
+                        );
+                        
+                        if (newQuestion) {
+                            currentQuestion.innerHTML = newQuestion.innerHTML;
+                            
+                            // Reinitialize event listener for the updated form
+                            const newForm = currentQuestion.querySelector('.answer-form');
+                            if (newForm) {
+                                newForm.addEventListener('submit', arguments.callee);
+                            }
+                        }
+                        
+                        // Restore scroll position
+                        window.scrollTo({
+                            top: scrollOffset,
+                            behavior: 'instant'
+                        });
+                    }
+                } else {
+                    throw new Error('Submission failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Failed to submit answer. Please try again.', 'error');
+            } finally {
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+            }
+        });
+    });
+});
+</script>
 
-                this.closest(".form-check").classList.add("option-selected");
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Question animations and option selection
+    const questions = document.querySelectorAll('.question-paper');
+    questions.forEach((question, index) => {
+        question.style.animationDelay = `${index * 0.1}s`;
+        
+        const optionsContainer = question.querySelector('.options-list');
+        const options = question.querySelectorAll('.option');
+        
+        options.forEach((option, optionIndex) => {
+            option.style.animationDelay = `${(index * 0.1) + (optionIndex * 0.05)}s`;
+            option.style.opacity = '0';
+            option.style.transform = 'translateY(10px)';
+            
+            const fillAnimation = document.createElement('div');
+            fillAnimation.className = 'fill-animation';
+            option.appendChild(fillAnimation);
+            
+            setTimeout(() => {
+                option.style.opacity = '1';
+                option.style.transform = 'translateY(0)';
+            }, ((index * 100) + (optionIndex * 50)));
+            
+            // Handle option selection
+            option.addEventListener('click', function(e) {
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) {
+                    // Uncheck all other options in this question
+                    optionsContainer.querySelectorAll('input[type="radio"]').forEach(input => {
+                        input.checked = false;
+                        input.closest('.option').classList.remove('selected');
+                    });
+                    
+                    // Check this option
+                    radio.checked = true;
+                    this.classList.add('selected');
+                    
+                    // Animate fill
+                    const fillAnim = this.querySelector('.fill-animation');
+                    if (fillAnim) {
+                        fillAnim.style.transform = 'scaleX(0)';
+                        setTimeout(() => {
+                            fillAnim.style.transform = 'scaleX(1)';
+                        }, 50);
+                    }
+                }
             });
         });
     });
+
+    // Form submission validation
+    document.querySelectorAll('.answer-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const selectedOption = form.querySelector('input[type="radio"]:checked');
+            if (!selectedOption) {
+                e.preventDefault();
+                alert('Please select an answer before submitting.');
+            }
+        });
+    });
+});
+</script>
+
+<div class="notification-container" id="notificationContainer"></div>
+
+{{ super() }}
 </script>
 {% endblock %}

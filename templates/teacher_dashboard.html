@@ -4,89 +4,46 @@
 
 {% block content %}
 <style>
+    body {
+        overflow-x: hidden;
+        background-color: #e3f2fd;
+        font-weight: bold;
+    }
     .section-card {
         display: none;
+        transition: all 0.3s ease-in-out;
     }
     .section-card.active {
         display: block;
+        transform: translateY(0);
+        opacity: 1;
     }
     .nav-link {
         cursor: pointer;
+        transition: color 0.4s ease-in-out, background-color 0.4s ease-in-out;
     }
-    .options-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+    .nav-link:hover {
+        color: #ffffff;
+        background-color: #6c63ff;
     }
     .option-item {
         padding: 10px;
         border: 1px solid #ddd;
         border-radius: 5px;
+        transition: box-shadow 0.4s ease-in-out, background-color 0.4s ease-in-out;
     }
-    body {
-        overflow-x: hidden;
-        background-color: #f8f9fa;
+    .option-item:hover {
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        background-color: #e0e7ff;
     }
-    .dashboard-container {
-        min-height: 100vh;
+    .modal.fade .modal-dialog {
+        transition: transform 0.4s ease-out, opacity 0.4s ease-in-out;
+        transform: translateY(-50px);
+        opacity: 0;
     }
-    .nav-wrapper {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background-color: #f8f9fa;
-        padding: 20px 0;
-        width: 100%;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .nav-container {
-        background: white;
-        padding: 15px 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin: 0 20px;
-    }
-    .nav-pills {
-        display: flex;
-        justify-content: space-between;
-        gap: 15px;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
-    .nav-pills .nav-item {
-        flex: 1;
-        display: flex;
-    }
-    .nav-pills .nav-link {
-        color: #495057;
-        padding: 12px 20px;
-        border-radius: 5px;
-        transition: all 0.3s ease;
-        white-space: nowrap;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        font-size: 0.95rem;
-        text-align: center;
-        border: 1px solid transparent;
-    }
-    .nav-pills .nav-link i {
-        font-size: 1rem;
-    }
-    .nav-pills .nav-link:hover {
-        background-color: #e9ecef;
-        border-color: #dee2e6;
-    }
-    .nav-pills .nav-link.active {
-        background-color: #0d6efd;
-        color: white;
-        border-color: #0d6efd;
-    }
-    .content-wrapper {
-        padding: 20px;
+    .modal.show .modal-dialog {
+        transform: translateY(0);
+        opacity: 1;
     }
     .section-card {
         background: white;
@@ -109,6 +66,542 @@
     .btn-action {
         padding: 8px 16px;
         border-radius: 5px;
+    }
+
+    /* Timer Settings Styles */
+    .animated-clock {
+        animation: pulse 2s infinite;
+        color: #4f46e5;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .btn-glow {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(45deg, #4f46e5, #818cf8);
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-glow:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .timer-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .timer-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .timer-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .timer-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #9ca3af;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #9ca3af;
+    }
+
+    .timer-status.active .status-dot {
+        background: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        animation: statusPulse 2s infinite;
+    }
+
+    @keyframes statusPulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .timer-display {
+        text-align: center;
+        margin: 2rem 0;
+    }
+
+    .time-circle {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+        background: linear-gradient(45deg, #4f46e5, #818cf8);
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .time-value {
+        font-size: 2.5rem;
+        font-weight: 600;
+    }
+
+    .time-unit {
+        font-size: 0.875rem;
+        opacity: 0.8;
+    }
+
+    .time-slider-wrapper {
+        margin: 1.5rem 0;
+    }
+
+    .time-slider {
+        width: 100%;
+        height: 6px;
+        -webkit-appearance: none;
+        background: #e5e7eb;
+        border-radius: 3px;
+        outline: none;
+    }
+
+    .time-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #4f46e5;
+        cursor: pointer;
+        border: 3px solid white;
+        box-shadow: 0 0 0 1px #4f46e5;
+        transition: all 0.2s ease;
+    }
+
+    .time-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+    }
+
+    .slider-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        color: #6b7280;
+        font-size: 0.75rem;
+    }
+
+    .timer-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.5rem;
+    }
+
+    .switch-wrapper {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .timer-toggle {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .switch-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #e5e7eb;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .switch-slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    .timer-toggle:checked + .switch-slider {
+        background-color: #10b981;
+    }
+
+    .timer-toggle:checked + .switch-slider:before {
+        transform: translateX(26px);
+    }
+
+    .btn-save {
+        background: #4f46e5;
+        color: white;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .btn-save:hover {
+        background: #4338ca;
+        transform: translateY(-2px);
+    }
+
+    .btn-save:active {
+        transform: translateY(0);
+    }
+
+    .timer-circle {
+        position: relative;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .timer-circle svg {
+        transform: rotate(-90deg);
+    }
+    
+    .timer-circle circle {
+        stroke-dasharray: 113;
+        transition: stroke-dashoffset 0.3s ease;
+    }
+    
+    .timer-progress {
+        stroke-dashoffset: 113;
+    }
+    
+    .card.border-primary {
+        border-width: 2px;
+    }
+    
+    .card.border-warning {
+        border-width: 2px;
+    }
+    
+    .timer-status {
+        min-width: 120px;
+        text-align: right;
+    }
+    
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        background-color: #f0f4f8;
+        border-radius: 12px;
+        padding: 15px;
+    }
+    .options-grid:hover {
+        transform: rotate(1deg);
+        background-color: #d1e7dd;
+    }
+    tbody tr {
+        transition: all 0.6s ease-in-out;
+        background-color: #ffffff;
+    }
+    tbody tr:hover {
+        background-color: #f8d7da;
+        transform: scale(1.02);
+    }
+    .option-item {
+        padding: 12px;
+        border-radius: 10px;
+        background-color: #ffffff;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.6s ease-in-out;
+    }
+    .option-item:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        background-color: #e2e3e5;
+        transform: translateY(-5px);
+    }
+
+    /* Animated Search Bar Styles */
+    .header-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .search-container {
+        position: relative;
+        width: 250px;
+        margin-left: 0.5rem;
+    }
+
+    .animated-search-input {
+        width: 200px;
+        padding: 8px 35px 8px 35px;
+        border: 2px solid #e2e8f0;
+        border-radius: 20px;
+        background-color: #fff;
+        font-size: 0.875rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .animated-search-input:focus {
+        width: 250px;
+        border-color: #6c63ff;
+        box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+        outline: none;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    .animated-search-input:focus + .search-icon {
+        color: #6c63ff;
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .clear-search {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        width: 18px;
+        height: 18px;
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .clear-search.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(-50%) scale(1);
+    }
+
+    .clear-search:hover {
+        background-color: #f1f5f9;
+        color: #64748b;
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .search-results-info {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        color: #64748b;
+        opacity: 0;
+        transform: translateY(-5px);
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    .search-results-info.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .results-count {
+        display: inline-block;
+        padding: 1px 6px;
+        background-color: #6c63ff;
+        color: white;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .search-highlight {
+        background: linear-gradient(120deg, rgba(108, 99, 255, 0.2) 0%, rgba(108, 99, 255, 0.2) 100%);
+        background-repeat: no-repeat;
+        background-size: 100% 0.25em;
+        background-position: 0 88%;
+        transition: background-size 0.25s ease-in;
+        border-radius: 2px;
+    }
+
+    .search-highlight.active {
+        background-size: 100% 100%;
+    }
+
+    /* Answer Highlighting Styles */
+    .selected-answer,
+    .correct-answer {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-weight: 500;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+
+    .selected-answer {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+    }
+
+    .selected-answer.correct {
+        background-color: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    .selected-answer.incorrect {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+    .correct-answer {
+        background-color: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    /* Answer status icon styles */
+    .answer-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .answer-status i {
+        font-size: 0.75rem;
+    }
+
+    .answer-status.correct {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .answer-status.incorrect {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Export Controls Styles */
+    .export-controls {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .export-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .export-form .form-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .export-form select {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .fas {
+        font-size: 16px;
+    }
+
+    .search-export-row {
+        padding: 10px 0;
+    }
+
+    .search-input {
+        width: 300px !important;
+    }
+
+    .export-inline form {
+        margin: 0;
+    }
+
+    .btn-success {
+        padding: 0.4rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .form-select {
+        padding: 0.4rem 2rem 0.4rem 0.75rem;
+        font-size: 0.875rem;
     }
 </style>
 
@@ -149,6 +642,11 @@
             <li class="nav-item">
                 <a class="nav-link" onclick="showSection('timer-settings')">
                     <i class="fas fa-clock"></i> Timer Settings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#student-management" data-section="student-management">
+                    <i class="fas fa-users"></i> Student Management
                 </a>
             </li>
         </ul>
@@ -398,8 +896,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="correct_answer" class="form-label">Correct Answer</label>
-                                <select class="form-control" id="correct_answer" name="correct_answer" required>
-                                    <option value="">Select Answer</option>
+                                <select class="form-select" id="correct_answer" name="correct_answer" required>
                                     <option value="A">A</option>
                                     <option value="B">B</option>
                                     <option value="C">C</option>
@@ -408,16 +905,11 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="day" class="form-label">Day</label>
-                                <select class="form-control" id="day" name="day" required>
-                                    <option value="">Select Day</option>
-                                    {% for day in range(settings.active_day, 7) %}
-                                        <option value="{{ day }}">Day {{ day }}</option>
-                                    {% endfor %}
-                                </select>
+                                <input type="number" class="form-control" id="day" name="day" min="1" max="6" required>
                             </div>
                         </div>
                         
-                        <div class="modal-footer">
+                        <div class="text-end">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary">Add Question</button>
                         </div>
@@ -467,396 +959,117 @@
             alert('An error occurred while adding the question');
         });
     });
-    </script>
 
-    <!-- Question Management Section -->
-    <div id="question-management" class="section-card">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0">Question Management</h3>
-            </div>
-            <div class="card-body">
-                <!-- Question List -->
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th style="width: 15%">Course</th>
-                                <th style="width: 25%">Question</th>
-                                <th style="width: 30%">Options</th>
-                                <th style="width: 10%">Correct Answer</th>
-                                <th style="width: 10%">Day</th>
-                                <th style="width: 10%">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for question in questions %}
-                            <tr>
-                                <td>
-                                    <span class="fw-medium">{{ question.course.name }}</span>
-                                    <br>
-                                    <small class="text-muted">{{ question.course.category.name }}</small>
-                                </td>
-                                <td>
-                                    <p class="mb-0">{{ question.question_text }}</p>
-                                </td>
-                                <td>
-                                    <div class="options-grid">
-                                        <div class="option-item">
-                                            <span class="fw-bold">A:</span> {{ question.option_a }}
-                                        </div>
-                                        <div class="option-item">
-                                            <span class="fw-bold">B:</span> {{ question.option_b }}
-                                        </div>
-                                        <div class="option-item">
-                                            <span class="fw-bold">C:</span> {{ question.option_c }}
-                                        </div>
-                                        <div class="option-item">
-                                            <span class="fw-bold">D:</span> {{ question.option_d }}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-primary">{{ question.correct_answer }}</span>
-                                </td>
-                                <td class="text-center">
-                                    {% if question.day == settings.active_day %}
-                                    <span class="badge bg-success">Day {{ question.day }}<br>(Active)</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary">Day {{ question.day }}</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group">
-                                        <button onclick="editQuestion({{ question.id }})" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <form action="{{ url_for('remove_question', question_id=question.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this question?');">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Student Results Section -->
-    <div id="student-results" class="section-card">
-        <div class="card-header">
-            <h3 class="mb-0">Student Results</h3>
-        </div>
-        <div class="card-body">
-            {% if results %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Student Name</th>
-                                <th>Score</th>
-                                <th>Percentage</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for student_id, result in results.items() %}
-                                <tr>
-                                    <td>{{ result.username }}</td>
-                                    <td>{{ result.correct }}/{{ result.total }}</td>
-                                    <td>
-                                        {% if result.total > 0 %}
-                                            <div class="progress">
-                                                <div class="progress-bar" role="progressbar" 
-                                                     style="width: {{ (result.correct / result.total * 100) | round(2) }}%"
-                                                     aria-valuenow="{{ (result.correct / result.total * 100) | round(2) }}"
-                                                     aria-valuemin="0" aria-valuemax="100">
-                                                    {{ (result.correct / result.total * 100) | round(2) }}%
-                                                </div>
-                                            </div>
-                                        {% else %}
-                                            0%
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if result.total > 0 %}
-                                            {% if (result.correct / result.total * 100) >= 60 %}
-                                                <span class="badge bg-success">Passed</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">Failed</span>
-                                            {% endif %}
-                                        {% else %}
-                                            <span class="badge bg-warning">Not Attempted</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="alert alert-info">
-                    <h4 class="alert-heading">No Results</h4>
-                    <p>No students have taken the exam yet.</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Question Tracking Section -->
-    <div id="question-tracking" class="section-card">
-        <div class="card-header">
-            <h3 class="mb-0">Question Tracking</h3>
-        </div>
-        <div class="card-body">
-            {% if answers %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Student Name</th>
-                                <th>Question</th>
-                                <th>Selected Answer</th>
-                                <th>Correct Answer</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for answer in answers %}
-                                <tr>
-                                    <td>{{ answer.selection_date.strftime('%Y-%m-%d') }}</td>
-                                    <td>{{ answer.user.username }}</td>
-                                    <td>{{ answer.question.question_text }}</td>
-                                    <td>Option {{ answer.selected_answer }}</td>
-                                    <td>Option {{ answer.question.correct_answer }}</td>
-                                    <td>
-                                        {% if answer.selected_answer == answer.question.correct_answer %}
-                                            <span class="badge bg-success">Correct</span>
-                                        {% else %}
-                                            <span class="badge bg-danger">Incorrect</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="alert alert-info">
-                    <h4 class="alert-heading">No Answers</h4>
-                    <p>No students have submitted any answers yet.</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Timer Settings Section -->
-    <div id="timer-settings" class="section-card">
-        <div class="card-header">
-            <h3 class="mb-0">Exam Timer Settings</h3>
-        </div>
-        <div class="card-body">
-            <form id="timerSettingsForm" action="{{ url_for('update_timer') }}" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="mb-3">
-                    <label for="course" class="form-label">Select Course</label>
-                    <select class="form-select" id="course" name="course_id" required>
-                        <option value="">Choose a course...</option>
-                        {% for course in courses %}
-                        <option value="{{ course.id }}">{{ course.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="duration" class="form-label">Exam Duration (minutes)</label>
-                    <input type="number" class="form-control" id="duration" name="duration_minutes" 
-                           min="1" max="480" required>
-                    <div class="form-text">Set the exam duration in minutes (max 8 hours)</div>
-                </div>
-                <button type="submit" class="btn btn-primary">Save Timer Settings</button>
-            </form>
-
-            <div class="mt-4">
-                <h4>Current Timer Settings</h4>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Course</th>
-                                <th>Duration</th>
-                                <th>Last Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for course in courses %}
-                            {% if course.timer %}
-                            <tr>
-                                <td>{{ course.name }}</td>
-                                <td>{{ course.timer.duration_minutes }} minutes</td>
-                                <td>{{ course.timer.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                            </tr>
-                            {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-    // Load students and their enrollments
-    function loadEnrollments() {
-        fetch('{{ url_for("get_students") }}', {
+    // Function to edit a question
+    function editQuestion(id) {
+        fetch(`/edit_question/${id}`, {
+            method: 'GET',
             headers: {
+                'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
             credentials: 'same-origin'
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch question data');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                const tbody = document.getElementById('enrollmentTableBody');
-                tbody.innerHTML = '';
+                const question = data.question;
                 
-                data.students.forEach(student => {
-                    const row = document.createElement('tr');
-                    
-                    // Add student name cell
-                    const nameCell = document.createElement('td');
-                    nameCell.textContent = student.username;
-                    row.appendChild(nameCell);
-                    
-                    // Add enrollment status for each course
-                    {% for course in courses %}
-                    const courseCell = document.createElement('td');
-                    const enrolled = student.courses.some(c => c.id === {{ course.id }});
-                    
-                    const button = document.createElement('button');
-                    button.className = `btn btn-sm ${enrolled ? 'btn-danger' : 'btn-success'}`;
-                    button.textContent = enrolled ? 'Unenroll' : 'Enroll';
-                    button.onclick = () => {
-                        const url = enrolled ? 
-                            '{{ url_for("unenroll_student") }}' : 
-                            '{{ url_for("enroll_student") }}';
-                            
-                        const formData = new FormData();
-                        formData.append('student_id', student.id);
-                        formData.append('course_id', '{{ course.id }}');
-                        formData.append('csrf_token', '{{ csrf_token() }}');
-                        
-                        fetch(url, {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            credentials: 'same-origin'
-                        })
-                        .then(response => response.json())
-                        .then(result => {
-                            if (result.success) {
-                                loadEnrollments();  // Refresh the table
-                            } else {
-                                alert(result.message || 'Failed to update enrollment');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('An error occurred while updating enrollment');
-                        });
-                    };
-                    
-                    courseCell.appendChild(button);
-                    row.appendChild(courseCell);
-                    {% endfor %}
-                    
-                    tbody.appendChild(row);
-                });
+                // Populate modal fields
+                document.getElementById('edit_question_id').value = question.id;
+                document.getElementById('edit_question_text').value = question.question_text;
+                document.getElementById('edit_option_a').value = question.option_a;
+                document.getElementById('edit_option_b').value = question.option_b;
+                document.getElementById('edit_option_c').value = question.option_c;
+                document.getElementById('edit_option_d').value = question.option_d;
+                document.getElementById('edit_correct_answer').value = question.correct_answer;
+                document.getElementById('edit_day').value = question.day;
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('editQuestionModal'));
+                modal.show();
             } else {
-                alert(data.message || 'Failed to load students');
+                alert(data.message || 'Failed to fetch question data');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while loading students');
+            alert(error.message || 'Failed to fetch question data. Please try again.');
         });
     }
 
-    // Load enrollments when the page loads
+    // Function to submit edit form
+    function submitEditForm(event) {
+        event.preventDefault();
+        
+        const form = document.getElementById('editQuestionForm');
+        const formData = new FormData(form);
+        const questionId = document.getElementById('edit_question_id').value;
+        
+        fetch(`/edit_question/${questionId}`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Failed to update question');
+                    });
+                }
+                throw new Error('Server error occurred');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editQuestionModal'));
+                modal.hide();
+                
+                // Show success message and reload page
+                alert('Question updated successfully!');
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to update question');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(error.message || 'An error occurred while updating the question. Please try again.');
+        });
+    }
+
+    // Add event listener when document is ready
     document.addEventListener('DOMContentLoaded', function() {
-        if (document.getElementById('enrollmentTable')) {
-            loadEnrollments();
+        const editForm = document.getElementById('editQuestionForm');
+        if (editForm) {
+            editForm.addEventListener('submit', submitEditForm);
+        }
+        
+        // Add event listener for day input validation
+        const dayInput = document.getElementById('edit_day');
+        if (dayInput) {
+            dayInput.addEventListener('change', function() {
+                const activeDay = parseInt("{{ settings.active_day }}");
+                const selectedDay = parseInt(this.value);
+                if (selectedDay < activeDay) {
+                    alert(`Cannot set day to a past day. Current active day is ${activeDay}`);
+                    this.value = activeDay;
+                }
+            });
         }
     });
-    </script>
 
-    <div class="modal fade" id="editQuestionModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Question</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editQuestionForm" onsubmit="submitEditForm(event)">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                        <input type="hidden" id="edit_question_id" name="question_id">
-                        <div class="mb-3">
-                            <label class="form-label">Question Text</label>
-                            <textarea name="question_text" id="edit_question_text" class="form-control" required></textarea>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Option A</label>
-                                <input type="text" name="option_a" id="edit_option_a" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Option B</label>
-                                <input type="text" name="option_b" id="edit_option_b" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Option C</label>
-                                <input type="text" name="option_c" id="edit_option_c" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Option D</label>
-                                <input type="text" name="option_d" id="edit_option_d" class="form-control" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Correct Answer</label>
-                                <select name="correct_answer" id="edit_correct_answer" class="form-control" required>
-                                    <option value="A">A</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                    <option value="D">D</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Day</label>
-                                <input type="number" name="day" id="edit_day" class="form-control" min="1" max="6" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
     function showMessage(message, type = 'success') {
         // First try to find existing flash container
         let flashContainer = document.getElementById('flash-messages');
@@ -1052,8 +1265,886 @@
             });
         }
     });
+
+    function resetAllTimers() {
+        if (!confirm('Are you sure you want to reset all timers? This will clear all exam progress for today.')) {
+            return;
+        }
+
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        
+        fetch('{{ url_for("reset_all_timers") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                csrf_token: csrfToken
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Clear localStorage for all reset courses
+                if (data.reset_courses) {
+                    data.reset_courses.forEach(courseId => {
+                        const keyPrefix = `examTimer_${courseId}`;
+                        localStorage.removeItem(`${keyPrefix}_v2`);
+                        localStorage.removeItem(`${keyPrefix}_startTime`);
+                        localStorage.removeItem(`${keyPrefix}_lastActive`);
+                    });
+                }
+                
+                // Update UI to show inactive status for all timers
+                document.querySelectorAll('.timer-card').forEach(card => {
+                    const statusBadge = card.querySelector('.badge');
+                    if (statusBadge) {
+                        statusBadge.className = 'badge bg-secondary';
+                        statusBadge.textContent = 'Inactive';
+                    }
+                });
+                
+                showAlert('success', 'All timers have been reset successfully');
+                
+                // Refresh the page after a short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'Failed to reset timers');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'An error occurred while resetting the timers');
+        });
+    }
     </script>
 
+    <!-- Question Management Section -->
+    <div id="question-management" class="section-card">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">Question Management</h3>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-end mb-3">
+                    <form action="{{ url_for('export_answers') }}" method="POST" class="d-flex align-items-center">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <select name="course_id" class="form-select me-2" required style="width: auto;">
+                            {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="day" id="day" class="form-select me-2" required style="width: auto;">
+                            {% for day in range(1, settings.active_day + 1) %}
+                                <option value="{{ day }}">Day {{ day }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="fas fa-file-excel"></i> Export
+                        </button>
+                    </form>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%">Course</th>
+                                <th style="width: 25%">Question</th>
+                                <th style="width: 30%">Options</th>
+                                <th style="width: 10%">Correct Answer</th>
+                                <th style="width: 10%">Day</th>
+                                <th style="width: 10%"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for question in questions %}
+                            <tr>
+                                <td>
+                                    <span class="fw-medium">{{ question.course.name }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ question.course.category.name }}</small>
+                                </td>
+                                <td>
+                                    <p class="mb-0">{{ question.question_text }}</p>
+                                </td>
+                                <td>
+                                    <div class="options-grid">
+                                        <div class="option-item">
+                                            <span class="fw-bold">A:</span> {{ question.option_a }}
+                                        </div>
+                                        <div class="option-item">
+                                            <span class="fw-bold">B:</span> {{ question.option_b }}
+                                        </div>
+                                        <div class="option-item">
+                                            <span class="fw-bold">C:</span> {{ question.option_c }}
+                                        </div>
+                                        <div class="option-item">
+                                            <span class="fw-bold">D:</span> {{ question.option_d }}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ question.correct_answer }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if question.day == settings.active_day %}
+                                    <span class="badge bg-success">Day {{ question.day }}<br>(Active)</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Day {{ question.day }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <button onclick="editQuestion({{ question.id }})" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <form action="{{ url_for('remove_question', question_id=question.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this question?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Results Section -->
+    <div id="student-results" class="section-card">
+        <div class="card-header">
+            <h3 class="mb-0">Student Results</h3>
+        </div>
+        <div class="card-body">
+            {% if results %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student_id, result in results.items() %}
+                                <tr>
+                                    <td>{{ result.username }}</td>
+                                    <td>{{ result.correct }}/{{ result.total }}</td>
+                                    <td>
+                                        {% if result.total > 0 %}
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ (result.correct / result.total * 100) | round(2) }}%"
+                                                     aria-valuenow="{{ (result.correct / result.total * 100) | round(2) }}"
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    {{ (result.correct / result.total * 100) | round(2) }}%
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.total > 0 %}
+                                            {% if (result.correct / result.total * 100) >= 60 %}
+                                                <span class="badge bg-success">Passed</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Failed</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-warning">Not Attempted</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">No Results</h4>
+                    <p>No students have taken the exam yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Question Tracking Section -->
+    <div id="question-tracking" class="section-card">
+        <div class="card">
+            <div class="card-header">
+                <div class="header-container">
+                    <h3 class="mb-0">Question Tracking</h3>
+                    <!-- Enhanced search bar -->
+                    <div class="search-container">
+                        <input type="text" 
+                               id="trackingSearchInput" 
+                               class="animated-search-input" 
+                               placeholder="Search student..."
+                               autocomplete="off">
+                        <i class="fas fa-search search-icon"></i>
+                        <button type="button" 
+                                id="clearTrackingSearch" 
+                                class="clear-search">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div id="trackingSearchStatus" class="search-results-info">
+                            <span class="results-count" id="trackingMatchCount">0</span> results
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="search-export-row mb-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="export-inline ms-3">
+                            <form action="{{ url_for('export_answers') }}" method="POST" class="d-flex align-items-center">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <select name="course_id" class="form-select me-2" required style="width: auto;">
+                                    {% for course in courses %}
+                                        <option value="{{ course.id }}">{{ course.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="day" id="day" class="form-select me-2" required style="width: auto;">
+                                    {% for day in range(1, settings.active_day + 1) %}
+                                        <option value="{{ day }}">Day {{ day }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-file-excel"></i> Export
+                                </button>
+                            </form>
+                        </div>
+                        <div class="clear-data-inline">
+                            <form action="{{ url_for('clear_answers') }}" method="POST" class="d-flex align-items-center" onsubmit="return confirmClearData()">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <select name="course_id" class="form-select me-2" required style="width: auto;">
+                                    {% for course in courses %}
+                                        <option value="{{ course.id }}">{{ course.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="day" id="clear_day" class="form-select me-2" required style="width: auto;">
+                                    {% for day in range(1, settings.active_day + 1) %}
+                                        <option value="{{ day }}">Day {{ day }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Clear Data
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table" id="trackingTable">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Question</th>
+                                <th>Selected Answer</th>
+                                <th>Correct Answer</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for answer in answers %}
+                            <tr class="tracking-row" data-student="{{ answer.user.username }}">
+                                <td>{{ answer.user.username }}</td>
+                                <td>{{ answer.question.question_text }}</td>
+                                <td>
+                                    <span class="selected-answer {% if answer.selected_answer == answer.question.correct_answer %}correct{% else %}incorrect{% endif %}">
+                                        Option {{ answer.selected_answer }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="correct-answer">
+                                        Option {{ answer.question.correct_answer }}
+                                    </span>
+                                </td>
+                                <td>{{ answer.selection_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if answer.selected_answer == answer.question.correct_answer %}
+                                        <span class="answer-status correct">
+                                            <i class="fas fa-check-circle"></i> Correct
+                                        </span>
+                                    {% else %}
+                                        <span class="answer-status incorrect">
+                                            <i class="fas fa-times-circle"></i> Incorrect
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Enhanced Question Tracking Search Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const trackingSearchInput = document.getElementById('trackingSearchInput');
+        const trackingSearchStatus = document.getElementById('trackingSearchStatus');
+        const trackingMatchCount = document.getElementById('trackingMatchCount');
+        const clearTrackingSearchBtn = document.getElementById('clearTrackingSearch');
+        const searchIcon = trackingSearchInput.nextElementSibling;
+
+        function filterTrackingTable() {
+            const searchTerm = trackingSearchInput.value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#trackingTable tbody tr');
+            let matchCount = 0;
+
+            rows.forEach(row => {
+                const studentName = row.getAttribute('data-student').toLowerCase();
+                const nameCell = row.querySelector('td:first-child');
+                
+                if (searchTerm === '' || studentName.includes(searchTerm)) {
+                    row.style.display = '';
+                    matchCount++;
+                    
+                    // Highlight matching text
+                    if (searchTerm && studentName.includes(searchTerm)) {
+                        const regex = new RegExp(searchTerm, 'gi');
+                        const highlightedText = nameCell.textContent.replace(
+                            regex,
+                            match => `<span class="search-highlight active">${match}</span>`
+                        );
+                        nameCell.innerHTML = highlightedText;
+                    } else {
+                        nameCell.textContent = row.getAttribute('data-student');
+                    }
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update UI elements
+            trackingMatchCount.textContent = matchCount;
+            trackingSearchStatus.classList.toggle('visible', searchTerm !== '');
+            clearTrackingSearchBtn.classList.toggle('visible', searchTerm !== '');
+            searchIcon.style.color = searchTerm ? '#6c63ff' : '#94a3b8';
+        }
+
+        // Add event listeners
+        trackingSearchInput.addEventListener('input', filterTrackingTable);
+        
+        trackingSearchInput.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        trackingSearchInput.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+        
+        clearTrackingSearchBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            trackingSearchInput.value = '';
+            trackingSearchStatus.classList.remove('visible');
+            this.classList.remove('visible');
+            searchIcon.style.color = '#94a3b8';
+            filterTrackingTable();
+            trackingSearchInput.focus();
+        });
+
+        // Add keyboard shortcut (Ctrl/Cmd + F)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f' && document.querySelector('#question-tracking.active')) {
+                e.preventDefault();
+                trackingSearchInput.focus();
+            }
+        });
+    });
+    </script>
+
+    <script>
+    function confirmClearData() {
+        const course = document.querySelector('select[name="course_id"] option:checked').text;
+        const day = document.querySelector('#clear_day').value;
+        return confirm(`Are you sure you want to clear all student answers for ${course} Day ${day}? This action cannot be undone.`);
+    }
+    </script>
+
+    <!-- Timer Settings Section -->
+    <div id="timer-settings" class="section-card">
+        <div class="container py-4">
+            <!-- Alert Container -->
+            <div id="alert-container" class="position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 1050;"></div>
+
+            <!-- Timer Settings -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Timer Settings</h5>
+                            <button type="button" class="btn btn-warning" onclick="resetAllTimers()">
+                                <i class="fas fa-redo"></i> Reset All Timers
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for course in courses %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100" id="course-{{ course.id }}">
+                                        <div class="card-body">
+                                            <div class="timer-card">
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <h4 class="mb-0">{{ course.name }}</h4>
+                                                    <span class="badge {% if course.timer and course.timer_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                                        {% if course.timer and course.timer_active %}Active{% else %}Inactive{% endif %}
+                                                    </span>
+                                                </div>
+                                                
+                                                <form class="timer-form" action="{{ url_for('update_timer') }}" method="POST">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <input type="hidden" name="course_id" value="{{ course.id }}">
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label d-flex justify-content-between">
+                                                            <span>Timer Duration</span>
+                                                            <span id="time-display-{{ course.id }}">
+                                                                {% set duration = course.timer.duration_minutes if course.timer else 60 %}
+                                                                {% set hours = (duration / 60)|int %}
+                                                                {% set minutes = duration % 60 %}
+                                                                {% if hours > 0 %}
+                                                                    {{ hours }}h {{ minutes }}m
+                                                                {% else %}
+                                                                    {{ minutes }} minutes
+                                                                {% endif %}
+                                                            </span>
+                                                        </label>
+                                                        <input type="range" 
+                                                               class="form-range time-slider" 
+                                                               name="duration" 
+                                                               min="1" 
+                                                               max="600" 
+                                                               value="{{ course.timer.duration_minutes if course.timer else 60 }}"
+                                                               data-course-id="{{ course.id }}">
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <div class="form-check form-switch">
+                                                            <input type="checkbox" 
+                                                                   class="form-check-input" 
+                                                                   name="timer_active" 
+                                                                   id="timer_active_{{ course.id }}"
+                                                                   {% if course.timer and course.timer_active %}checked{% endif %}>
+                                                            <label class="form-check-label" for="timer_active_{{ course.id }}">
+                                                                Timer Active
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="d-flex gap-2">
+                                                        <button type="submit" class="btn btn-primary flex-grow-1">
+                                                            <i class="fas fa-save"></i> Save Settings
+                                                        </button>
+                                                        {% if course.timer %}
+                                                            <button type="button" 
+                                                                    class="btn btn-warning" 
+                                                                    onclick="resetTimer('{{ course.id }}')">
+                                                                <i class="fas fa-redo"></i> Reset Timer
+                                                            </button>
+                                                        {% endif %}
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Update time display when slider changes
+    document.querySelectorAll('.time-slider').forEach(slider => {
+        slider.addEventListener('input', function() {
+            const courseId = this.dataset.courseId;
+            const displayElement = document.getElementById(`time-display-${courseId}`);
+            if (displayElement) {
+                const hours = Math.floor(this.value / 60);
+                const minutes = this.value % 60;
+                displayElement.textContent = hours > 0 ? 
+                    `${hours}h ${minutes}m` : 
+                    `${minutes} minutes`;
+            }
+        });
+    });
+
+    // Handle timer form submission
+    document.querySelectorAll('.timer-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch("{{ url_for('update_timer') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message and reload page
+                    alert('Timer updated successfully!');
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to update timer');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the timer');
+            });
+        });
+    });
+
+    function resetTimer(courseId) {
+        if (!confirm('Are you sure you want to reset the timer? This will clear all exam progress for today.')) {
+            return;
+        }
+
+        fetch('/reset_timer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `course_id=${courseId}&csrf_token=${document.querySelector('input[name="csrf_token"]').value}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Clear localStorage for this course
+                const keyPrefix = `examTimer_${data.timer.course_id}`;
+                localStorage.removeItem(`${keyPrefix}_v2`);
+                localStorage.removeItem(`${keyPrefix}_startTime`);
+                localStorage.removeItem(`${keyPrefix}_lastActive`);
+                
+                // Update UI
+                updateTimerDisplay(courseId, data.timer);
+                showAlert('success', 'Timer reset successfully');
+                
+                // Refresh the page after a short delay to update all states
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert('error', data.message || 'Failed to reset timer');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'An error occurred while resetting the timer');
+        });
+    }
+
+    function resetAllTimers() {
+        if (!confirm('Are you sure you want to reset all timers? This will clear all exam progress for today.')) {
+            return;
+        }
+
+        fetch('/reset_all_timers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `csrf_token=${document.querySelector('input[name="csrf_token"]').value}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Clear localStorage for all reset courses
+                data.reset_courses.forEach(courseId => {
+                    const keyPrefix = `examTimer_${courseId}`;
+                    localStorage.removeItem(`${keyPrefix}_v2`);
+                    localStorage.removeItem(`${keyPrefix}_startTime`);
+                    localStorage.removeItem(`${keyPrefix}_lastActive`);
+                });
+                
+                showAlert('success', 'All timers have been reset successfully');
+                
+                // Refresh the page after a short delay to update all states
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert('error', data.message || 'Failed to reset timers');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'An error occurred while resetting the timers');
+        });
+    }
+
+    function updateTimerDisplay(courseId, timer) {
+        const displayElement = document.getElementById(`time-display-${courseId}`);
+        if (displayElement) {
+            const hours = Math.floor(timer.duration_minutes / 60);
+            const minutes = timer.duration_minutes % 60;
+            displayElement.textContent = hours > 0 ? 
+                `${hours}h ${minutes}m` : 
+                `${minutes} minutes`;
+        }
+
+        // Update active status badge
+        const statusBadge = document.querySelector(`#course-${courseId} .badge`);
+        if (statusBadge) {
+            statusBadge.className = `badge ${timer.active ? 'bg-success' : 'bg-secondary'}`;
+            statusBadge.textContent = timer.active ? 'Active' : 'Inactive';
+        }
+    }
+
+    function showAlert(type, message) {
+        const alertContainer = document.getElementById('alert-container');
+        if (!alertContainer) return;
+
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        alertContainer.appendChild(alert);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+        }, 5000);
+    }
+    </script>
+
+    <!-- Bulk Timer Settings Modal -->
+    <div class="modal fade" id="bulkTimerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Set All Course Timers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="bulkTimerForm" action="{{ url_for('update_all_timers') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Duration for All Courses (minutes)</label>
+                            <div class="input-group">
+                                <input type="number" 
+                                       name="duration" 
+                                       class="form-control" 
+                                       value="60"
+                                       min="1" 
+                                       max="240"
+                                       required>
+                                <span class="input-group-text">min</span>
+                            </div>
+                            <div class="form-text">This will set the same duration for all courses</div>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input type="checkbox" 
+                                   class="form-check-input" 
+                                   name="all_timers_active" 
+                                   id="all_timers_active">
+                            <label class="form-check-label" for="all_timers_active">
+                                Activate All Timers
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="bulkTimerForm" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Handle bulk timer update
+    document.getElementById('bulkTimerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const duration = document.getElementById('bulk_duration').value;
+        const active = document.getElementById('bulk_timer_active').checked;
+        
+        // Update all individual timer forms
+        document.querySelectorAll('.timer-form').forEach(form => {
+            const slider = form.querySelector('.time-slider');
+            const activeCheckbox = form.querySelector('input[type="checkbox"]');
+            
+            slider.value = duration;
+            activeCheckbox.checked = active;
+            
+            // Update display
+            const courseId = slider.dataset.courseId;
+            const displayElement = document.getElementById(`time-display-${courseId}`);
+            displayElement.textContent = `${duration} minutes`;
+        });
+        
+        // Submit the form
+        this.submit();
+    });
+    </script>
+
+    <!-- Student Management Section -->
+    <div id="student-management" class="section-card">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">Student Management</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Enrolled Courses</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students if not student.is_teacher %}
+                            <tr data-student-id="{{ student.id }}">
+                                <td>{{ student.username }}</td>
+                                <td>
+                                    {% for course in student.enrolled_courses %}
+                                    <span class="badge bg-primary me-1">{{ course.name }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteStudent({{ student.id }}, '{{ student.username }}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center">No students found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Student Confirmation Modal -->
+    <div class="modal fade" id="deleteStudentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete student <strong id="deleteStudentName"></strong>?</p>
+                    <p class="text-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        This action cannot be undone. All of the student's data, including exam answers and records, will be permanently deleted.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash"></i> Delete Student
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize variables for student deletion
+        let studentToDelete = null;
+        const deleteStudentModal = new bootstrap.Modal(document.getElementById('deleteStudentModal'));
+        
+        // Function to confirm student deletion
+        window.confirmDeleteStudent = function(studentId, username) {
+            studentToDelete = studentId;
+            document.getElementById('deleteStudentName').textContent = username;
+            deleteStudentModal.show();
+        };
+        
+        // Handle delete confirmation
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (!studentToDelete) return;
+            
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            
+            fetch('{{ url_for("delete_student") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    student_id: studentToDelete,
+                    csrf_token: csrfToken
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                deleteStudentModal.hide();
+                if (data.success) {
+                    showAlert('success', data.message);
+                    // Remove the student's row from the table
+                    const row = document.querySelector(`tr[data-student-id="${studentToDelete}"]`);
+                    if (row) {
+                        row.remove();
+                    }
+                    // Reload the page after a short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    throw new Error(data.message || 'Failed to delete student');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', error.message || 'An error occurred while deleting the student');
+            })
+            .finally(() => {
+                studentToDelete = null;
+            });
+        });
+    });
+    </script>
     {% endblock %}
 
     {% block scripts %}
