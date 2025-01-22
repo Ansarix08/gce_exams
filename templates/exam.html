@@ -10,13 +10,14 @@
             <div class="questions-container">
                 {% if questions %}
                     {% for question in questions %}
-                        <div class="question-paper animate__animated animate__fadeIn" style="animation-delay: {{ loop.index * 0.2 }}s">
+                        <div id="question_{{ question.id }}" class="question-paper animate__animated animate__fadeIn" style="animation-delay: {{ loop.index * 0.2 }}s">
                             <div class="question-header">
                                 <div class="question-info">
                                     <div class="number">Question {{ loop.index }}</div>
                                     <div class="subject">{{ question.course.name }}</div>
                                 </div>
-                                {% if question.id in answered_question_ids %}
+                                {% set user_answer = get_answer(current_user.id, question.id) %}
+                                {% if user_answer %}
                                     <div class="status answered">
                                         <i class="fas fa-check"></i> Answered
                                     </div>
@@ -30,7 +31,7 @@
                             <div class="question-content">
                                 <div class="question-text">{{ question.question_text }}</div>
 
-                                {% if question.id not in answered_question_ids %}
+                                {% if not user_answer %}
                                     <form method="POST" action="{{ url_for('submit_answer') }}" class="answer-form">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="question_id" value="{{ question.id }}">
@@ -61,13 +62,8 @@
                                         </div>
                                     </form>
                                 {% else %}
-                                    {% set user_answer = get_answer(current_user.id, question.id) %}
                                     {% if not exam_submitted %}
-                                        {% if user_answer %}
-                                            <form method="POST" action="{{ url_for('edit_answer') }}" class="answer-form">
-                                        {% else %}
-                                            <form method="POST" action="{{ url_for('submit_answer') }}" class="answer-form">
-                                        {% endif %}
+                                        <form method="POST" action="{{ url_for('edit_answer') }}" class="answer-form">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="question_id" value="{{ question.id }}">
 
@@ -81,7 +77,7 @@
                                                     <label class="option animate__animated animate__fadeInRight" style="animation-delay: {{ loop.index * 0.1 }}s">
                                                         <input type="radio" name="answer" 
                                                                value="{{ option }}"
-                                                               {% if user_answer and user_answer.selected_answer == option %}checked{% endif %}
+                                                               {% if user_answer.selected_answer == option %}checked{% endif %}
                                                                required>
                                                         <div class="selection-indicator"></div>
                                                         <div class="fill-animation"></div>
@@ -94,15 +90,9 @@
                                             </div>
 
                                             <div class="action-area">
-                                                {% if user_answer %}
-                                                    <button type="submit" class="btn-classic secondary animate__animated animate__fadeInUp">
-                                                        Edit Answer
-                                                    </button>
-                                                {% else %}
-                                                    <button type="submit" class="btn-classic animate__animated animate__fadeInUp">
-                                                        Submit Answer
-                                                    </button>
-                                                {% endif %}
+                                                <button type="submit" class="btn-classic secondary animate__animated animate__fadeInUp">
+                                                    Edit Answer
+                                                </button>
                                             </div>
                                         </form>
                                     {% endif %}
@@ -113,10 +103,10 @@
 
                     {% if questions|length == answered_question_ids|length %}
                         <div class="final-submission animate__animated animate__fadeInUp">
-                            <form method="POST" action="{{ url_for('submit_exam') }}">
+                            <form method="POST" action="{{ url_for('submit_exam') }}" class="submit-exam-form">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn-classic primary">
-                                    Submit Examination
+                                    <i class="fas fa-check-circle"></i> Submit Examination
                                 </button>
                             </form>
                         </div>
@@ -614,16 +604,16 @@
     }
 
     .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
         background: white;
         border-radius: 8px;
-        padding: 15px 25px;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        animation: slideIn 0.3s ease-out;
-        max-width: 350px;
+        padding: 12px 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        animation-duration: 0.3s;
     }
 
     .notification.success {
@@ -634,8 +624,14 @@
         border-left: 4px solid #f44336;
     }
 
+    .notification-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
     .notification i {
-        font-size: 20px;
+        font-size: 1.2rem;
     }
 
     .notification.success i {
@@ -646,24 +642,53 @@
         color: #f44336;
     }
 
-    @keyframes slideIn {
+    .final-submission {
+        margin-top: 2rem;
+        padding: 2rem;
+        text-align: center;
+        background: linear-gradient(145deg, #ffffff, #f5f9ff);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .final-submission .btn-classic.primary {
+        font-size: 1.2rem;
+        padding: 1rem 2rem;
+        background: linear-gradient(145deg, #2b3a67, #1a237e);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .final-submission .btn-classic.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(26, 35, 126, 0.2);
+    }
+
+    .final-submission .btn-classic.primary i {
+        font-size: 1.4rem;
+        color: #64ffda;
+    }
+
+    @keyframes fadeInUp {
         from {
-            transform: translateX(100%);
             opacity: 0;
+            transform: translateY(20px);
         }
         to {
-            transform: translateX(0);
             opacity: 1;
+            transform: translateY(0);
         }
     }
 
-    @keyframes fadeOut {
-        from {
-            opacity: 1;
-        }
-        to {
-            opacity: 0;
-        }
+    .animate__fadeInUp {
+        animation: fadeInUp 0.5s ease-out;
     }
 </style>
 
@@ -811,102 +836,103 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Store scroll position before form submission
+    document.querySelectorAll('.answer-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Store current scroll position in session storage
+            sessionStorage.setItem('scrollPosition', window.scrollY);
+        });
+    });
+
+    // Restore scroll position after page load
+    if (sessionStorage.getItem('scrollPosition') !== null) {
+        window.scrollTo(0, parseInt(sessionStorage.getItem('scrollPosition')));
+        sessionStorage.removeItem('scrollPosition');
+    }
+
     // Notification function
     function showNotification(message, type = 'success') {
-        const container = document.getElementById('notificationContainer');
         const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        
-        const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+        notification.className = `notification ${type} animate__animated animate__fadeIn`;
         notification.innerHTML = `
-            <i class="fas fa-${icon}"></i>
-            <div class="notification-message">${message}</div>
+            <div class="notification-content">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            </div>
         `;
         
-        container.appendChild(notification);
+        document.body.appendChild(notification);
         
         // Remove notification after 3 seconds
         setTimeout(() => {
-            notification.style.animation = 'fadeOut 0.3s ease-out';
+            notification.classList.replace('animate__fadeIn', 'animate__fadeOut');
             setTimeout(() => {
-                container.removeChild(notification);
+                notification.remove();
             }, 300);
         }, 3000);
     }
 
-    // Handle answer form submissions
-    document.querySelectorAll('.answer-form').forEach(form => {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            const isEdit = this.action.includes('edit_answer');
-            
-            // Store the current question's position
-            const currentQuestion = this.closest('.question-paper');
-            const scrollOffset = currentQuestion.offsetTop;
-            
-            try {
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-                submitButton.disabled = true;
+    // Show flash messages if they exist
+    const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(flash => {
+        const message = flash.textContent;
+        const type = flash.classList.contains('success') ? 'success' : 'error';
+        showNotification(message, type);
+        flash.remove();
+    });
+
+    // Function to check if all questions are answered and show/hide submit exam button
+    function updateSubmitExamButton() {
+        const unansweredQuestions = document.querySelectorAll('.status.unanswered');
+        const questionsContainer = document.querySelector('.questions-container');
+        let finalSubmission = document.querySelector('.final-submission');
+        
+        if (unansweredQuestions.length === 0) {
+            if (!finalSubmission) {
+                finalSubmission = document.createElement('div');
+                finalSubmission.className = 'final-submission animate__animated animate__fadeInUp';
+                finalSubmission.innerHTML = `
+                    <form method="POST" action="{{ url_for('submit_exam') }}" class="submit-exam-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn-classic primary">
+                            <i class="fas fa-check-circle"></i> Submit Examination
+                        </button>
+                    </form>
+                `;
+                questionsContainer.appendChild(finalSubmission);
                 
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-                
-                if (response.ok) {
-                    // Show success notification
-                    const message = isEdit ? 
-                        'Answer successfully updated!' : 
-                        'Answer successfully submitted!';
-                    showNotification(message, 'success');
-                    
-                    // Get the new content
-                    const newContent = await response.text();
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = newContent;
-                    
-                    // Find the corresponding new question in the response
-                    const newQuestionsContainer = tempDiv.querySelector('.questions-container');
-                    if (newQuestionsContainer) {
-                        // Only update the current question's content
-                        const questionId = formData.get('question_id');
-                        const newQuestion = newQuestionsContainer.querySelector(
-                            `.question-paper:has(input[value="${questionId}"])`
-                        );
-                        
-                        if (newQuestion) {
-                            currentQuestion.innerHTML = newQuestion.innerHTML;
-                            
-                            // Reinitialize event listener for the updated form
-                            const newForm = currentQuestion.querySelector('.answer-form');
-                            if (newForm) {
-                                newForm.addEventListener('submit', arguments.callee);
-                            }
-                        }
-                        
-                        // Restore scroll position
-                        window.scrollTo({
-                            top: scrollOffset,
-                            behavior: 'instant'
-                        });
-                    }
-                } else {
-                    throw new Error('Submission failed');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('Failed to submit answer. Please try again.', 'error');
-            } finally {
-                submitButton.innerHTML = originalButtonText;
-                submitButton.disabled = false;
+                // Add smooth scroll to the submit button
+                finalSubmission.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+        } else if (finalSubmission) {
+            finalSubmission.remove();
+        }
+    }
+
+    // Check for submit exam button on page load
+    updateSubmitExamButton();
+
+    // Store scroll position before form submission
+    document.querySelectorAll('.answer-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            sessionStorage.setItem('scrollPosition', window.scrollY);
+        });
+    });
+
+    // Update submit exam button after each answer submission
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.target.classList.contains('status')) {
+                updateSubmitExamButton();
+            }
+        });
+    });
+
+    // Observe changes to status elements
+    document.querySelectorAll('.status').forEach(status => {
+        observer.observe(status, { 
+            attributes: true, 
+            attributeFilter: ['class'] 
         });
     });
 });
