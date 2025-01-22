@@ -281,16 +281,8 @@ def exam():
         flash('Error activating exam timer', 'error')
         return redirect(url_for('index'))
 
-    # Get answered question IDs for today
-    answered_questions = Answer.query.filter_by(
-        user_id=current_user.id,
-        selection_date=date.today()
-    ).all()
-    answered_question_ids = [answer.question_id for answer in answered_questions]
-    
     return render_template('exam.html',
                          questions=questions,
-                         answered_question_ids=answered_question_ids,
                          settings=settings,
                          course_timers=course_timers,
                          server_time=current_time.isoformat(),
@@ -304,15 +296,21 @@ def submit_answer():
         flash('Teachers cannot submit answers!', 'error')
         return redirect(url_for('index'))
 
-    # Print form data for debugging
-    print("Form data:", request.form)
-    
-    # Check if exam has already been submitted today
+    # Get form data
+    question_id = request.form.get('question_id')
+    selected_answer = request.form.get('answer')
+
+    if not question_id or not selected_answer:
+        flash('Please select an answer before submitting.', 'error')
+        return redirect(url_for('exam'))
+
+    # Get exam settings
     settings = ExamSettings.query.first()
     if not settings:
         flash('Exam settings not configured!', 'error')
         return redirect(url_for('index'))
 
+    # Check if exam has already been submitted today
     exam_submitted = ExamSubmission.query.filter_by(
         user_id=current_user.id,
         day=settings.active_day,
@@ -323,18 +321,10 @@ def submit_answer():
         flash('You have already submitted the exam for today. Please come back tomorrow.', 'warning')
         return redirect(url_for('index'))
 
-    question_id = request.form.get('question_id')
-    selected_answer = request.form.get('answer')
-
-    print(f"Question ID: {question_id}, Selected Answer: {selected_answer}")
-
-    if not question_id or not selected_answer:
-        flash('Invalid submission. Please try again.', 'error')
-        return redirect(url_for('exam'))
-
     # Check if the user has already answered this question today
     existing_answer = get_answer(current_user.id, question_id)
     if existing_answer:
+        flash('You have already answered this question. Redirecting to edit.', 'info')
         return redirect(url_for('edit_answer', question_id=question_id, answer=selected_answer))
 
     # Get the question to verify it exists and belongs to an active course
@@ -343,15 +333,11 @@ def submit_answer():
         flash('Question not found!', 'error')
         return redirect(url_for('exam'))
 
-    print(f"Found question: {question.id}, Course: {question.course.name if question.course else 'No course'}")
-
     # Check if the course timer is active and not expired
     course = question.course
     if not course:
         flash('Question does not belong to any course!', 'error')
         return redirect(url_for('exam'))
-
-    print(f"Course timer active: {course.timer_active}, Timer: {course.timer}")
 
     if not course.timer_active:
         # Try to activate the timer
@@ -362,10 +348,8 @@ def submit_answer():
             course.timer.end_time = current_time + timedelta(minutes=course.timer.duration_minutes)
             try:
                 db.session.commit()
-                print("Successfully activated course timer")
             except Exception as e:
                 db.session.rollback()
-                print(f"Error activating timer: {str(e)}")
                 flash('Error activating exam timer', 'error')
                 return redirect(url_for('exam'))
         else:
@@ -377,25 +361,28 @@ def submit_answer():
         return redirect(url_for('exam'))
 
     # Create new answer
-    answer = Answer(
-        user_id=current_user.id,
-        question_id=question_id,
-        selected_answer=selected_answer,
-        selection_date=date.today(),
-        day=settings.active_day  # Added day field
-    )
-
     try:
+        answer = Answer(
+            user_id=current_user.id,
+            question_id=question_id,
+            selected_answer=selected_answer,
+            selection_date=date.today(),
+            day=settings.active_day
+        )
         db.session.add(answer)
         db.session.commit()
+        
+        # Store the current question ID in the session
+        session['last_question_id'] = question_id
+        
         flash('Answer submitted successfully!', 'success')
-        print("Successfully saved answer")
+        return redirect(url_for('exam', _anchor=f'question_{question_id}'))
+        
     except Exception as e:
         db.session.rollback()
         flash('Error submitting answer. Please try again.', 'error')
         print(f"Error submitting answer: {str(e)}")
-
-    return redirect(url_for('exam'))
+        return redirect(url_for('exam', _anchor=f'question_{question_id}'))
 
 @app.route('/submit_exam', methods=['POST'])
 @login_required
