@@ -517,7 +517,6 @@
         padding: 4px 12px;
         border-radius: 15px;
         font-weight: 500;
-        font-size: 0.875rem;
     }
 
     .answer-status i {
@@ -602,6 +601,222 @@
     .form-select {
         padding: 0.4rem 2rem 0.4rem 0.75rem;
         font-size: 0.875rem;
+    }
+
+    /* Edit Question Modal Styles */
+    .edit-modal-content {
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        background-color: #ffffff;
+        border: none;
+    }
+
+    .edit-modal-header {
+        background: linear-gradient(135deg, #2196F3, #1976D2);
+        color: white;
+        border-radius: 20px 20px 0 0;
+        padding: 1.75rem;
+        border: none;
+    }
+
+    .edit-modal-header .modal-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .edit-modal-header .btn-close {
+        background-color: rgba(255, 255, 255, 0.3);
+        padding: 0.75rem;
+        border-radius: 50%;
+        transition: background-color 0.3s;
+    }
+
+    .edit-modal-header .btn-close:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .edit-form-control {
+        border: 2px solid #e0e7ff;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        background-color: #f8fafc;
+    }
+
+    .question-text-area {
+        width: 100%;
+        min-height: 150px !important;
+        padding: 1.25rem !important;
+        font-size: 1.1rem !important;
+        line-height: 1.6 !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .edit-form-control:focus {
+        border-color: #2196F3;
+        box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.15);
+        background-color: #ffffff;
+        outline: none;
+    }
+
+    .edit-form-label {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+        display: block;
+    }
+
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .option-card {
+        background: #ffffff;
+        border: 2px solid #e0e7ff;
+        border-radius: 16px;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .option-card:hover {
+        border-color: #2196F3;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(33, 150, 243, 0.1);
+    }
+
+    .option-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .option-label {
+        background: #2196F3;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .correct-answer-section {
+        background: linear-gradient(to right, #f0fdf4, #dcfce7);
+        border: 2px solid #22c55e;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .correct-answer-title {
+        color: #166534;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .correct-answer-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+
+    .correct-option {
+        position: relative;
+    }
+
+    .correct-option input[type="radio"] {
+        display: none;
+    }
+
+    .correct-option label {
+        display: block;
+        padding: 1rem;
+        text-align: center;
+        background: white;
+        border: 2px solid #e0e7ff;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .correct-option input[type="radio"]:checked + label {
+        background: #22c55e;
+        border-color: #22c55e;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(34, 197, 94, 0.2);
+    }
+
+    .correct-option label:hover {
+        border-color: #22c55e;
+        transform: translateY(-2px);
+    }
+
+    .day-number-section {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 1.5rem;
+        max-width: 200px;
+    }
+
+    .edit-modal-footer {
+        border-top: 1px solid #e0e7ff;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    .edit-btn {
+        padding: 0.875rem 1.75rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .edit-btn-primary {
+        background: #2196F3;
+        color: white;
+        border: none;
+    }
+
+    .edit-btn-primary:hover {
+        background: #1976D2;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(33, 150, 243, 0.2);
+    }
+
+    .edit-btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+    }
+
+    .edit-btn-secondary:hover {
+        background: #e2e8f0;
+        transform: translateY(-2px);
     }
 </style>
 
@@ -987,8 +1202,13 @@
                 document.getElementById('edit_option_b').value = question.option_b;
                 document.getElementById('edit_option_c').value = question.option_c;
                 document.getElementById('edit_option_d').value = question.option_d;
-                document.getElementById('edit_correct_answer').value = question.correct_answer;
                 document.getElementById('edit_day').value = question.day;
+                
+                // Set the correct answer radio button
+                const correctAnswerRadio = document.getElementById(`edit_correct_${question.correct_answer}`);
+                if (correctAnswerRadio) {
+                    correctAnswerRadio.checked = true;
+                }
                 
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('editQuestionModal'));
@@ -1175,8 +1395,13 @@
                 document.getElementById('edit_option_b').value = question.option_b;
                 document.getElementById('edit_option_c').value = question.option_c;
                 document.getElementById('edit_option_d').value = question.option_d;
-                document.getElementById('edit_correct_answer').value = question.correct_answer;
                 document.getElementById('edit_day').value = question.day;
+                
+                // Set the correct answer radio button
+                const correctAnswerRadio = document.getElementById(`edit_correct_${question.correct_answer}`);
+                if (correctAnswerRadio) {
+                    correctAnswerRadio.checked = true;
+                }
                 
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('editQuestionModal'));
@@ -1599,7 +1824,110 @@
             </div>
         </div>
     </div>
-
+<!-- Edit Question Modal -->
+    <div class="modal fade" id="editQuestionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content edit-modal-content">
+                <div class="modal-header edit-modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>Edit Question
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="editQuestionForm" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" id="edit_question_id" name="question_id">
+                        
+                        <div class="mb-4">
+                            <label for="edit_question_text" class="edit-form-label">
+                                <i class="fas fa-question-circle text-primary me-2"></i>
+                                Question Text
+                            </label>
+                            <textarea class="edit-form-control question-text-area" id="edit_question_text" 
+                                    name="question_text" rows="6" required placeholder="Enter your question here..."></textarea>
+                        </div>
+                        
+                        <div class="options-grid">
+                            <div class="option-card">
+                                <div class="option-header">
+                                    <span class="option-label">A</span>
+                                    <label for="edit_option_a" class="edit-form-label mb-0">Option A</label>
+                                </div>
+                                <input type="text" class="edit-form-control mb-0" id="edit_option_a" 
+                                       name="option_a" required placeholder="Enter option A">
+                            </div>
+                            
+                            <div class="option-card">
+                                <div class="option-header">
+                                    <span class="option-label">B</span>
+                                    <label for="edit_option_b" class="edit-form-label mb-0">Option B</label>
+                                </div>
+                                <input type="text" class="edit-form-control mb-0" id="edit_option_b" 
+                                       name="option_b" required placeholder="Enter option B">
+                            </div>
+                            
+                            <div class="option-card">
+                                <div class="option-header">
+                                    <span class="option-label">C</span>
+                                    <label for="edit_option_c" class="edit-form-label mb-0">Option C</label>
+                                </div>
+                                <input type="text" class="edit-form-control mb-0" id="edit_option_c" 
+                                       name="option_c" required placeholder="Enter option C">
+                            </div>
+                            
+                            <div class="option-card">
+                                <div class="option-header">
+                                    <span class="option-label">D</span>
+                                    <label for="edit_option_d" class="edit-form-label mb-0">Option D</label>
+                                </div>
+                                <input type="text" class="edit-form-control mb-0" id="edit_option_d" 
+                                       name="option_d" required placeholder="Enter option D">
+                            </div>
+                        </div>
+                        
+                        <div class="correct-answer-section">
+                            <div class="correct-answer-title">
+                                <i class="fas fa-check-circle text-success"></i>
+                                Select Correct Answer
+                            </div>
+                            <div class="correct-answer-grid">
+                                {% for option in ['A', 'B', 'C', 'D'] %}
+                                <div class="correct-option">
+                                    <input type="radio" name="correct_answer" 
+                                           id="edit_correct_{{ option }}" value="{{ option }}" required>
+                                    <label for="edit_correct_{{ option }}">
+                                        Option {{ option }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="day-number-section">
+                            <label for="edit_day" class="edit-form-label">
+                                <i class="fas fa-calendar-day text-primary me-2"></i>
+                                Day Number
+                            </label>
+                            <input type="number" class="edit-form-control mb-0" id="edit_day" 
+                                   name="day" min="1" required>
+                        </div>
+                        
+                        <div class="edit-modal-footer">
+                            <button type="button" class="edit-btn edit-btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times"></i>
+                                Cancel
+                            </button>
+                            <button type="submit" class="edit-btn edit-btn-primary">
+                                <i class="fas fa-save"></i>
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
     // Enhanced Question Tracking Search Functionality
     document.addEventListener('DOMContentLoaded', function() {
@@ -2121,6 +2449,7 @@
             .then(data => {
                 deleteStudentModal.hide();
                 if (data.success) {
+                    // Show success message
                     showAlert('success', data.message);
                     // Remove the student's row from the table
                     const row = document.querySelector(`tr[data-student-id="${studentToDelete}"]`);
