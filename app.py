@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_file, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -1375,42 +1375,26 @@ def export_answers():
         student_scores.columns = ['Student', 'Total Questions', 'Correct Answers']
         student_scores['Score (%)'] = (student_scores['Correct Answers'] / student_scores['Total Questions'] * 100).round(2)
         
-        # Create Excel writer object
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            # Write detailed answers to first sheet
-            df.to_excel(writer, sheet_name='Detailed Answers', index=False)
-            
-            # Write summary to second sheet
-            student_scores.to_excel(writer, sheet_name='Summary', index=False)
-            
-            # Get workbook and worksheet objects
-            workbook = writer.book
-            
-            # Add formatting
-            header_format = workbook.add_format({
-                'bold': True,
-                'text_wrap': True,
-                'valign': 'top',
-                'bg_color': '#D9EAD3',
-                'border': 1
-            })
-            
-            # Format the headers in both sheets
-            for sheet in writer.sheets.values():
-                for col_num, value in enumerate(df.columns.values):
-                    sheet.write(0, col_num, value, header_format)
-                sheet.autofit()
+        # Create CSV output
+        output = io.StringIO()
         
-        # Seek to the beginning and return the Excel file
-        output.seek(0)
+        # Write the header
+        output.write("Export Date: {}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        output.write("Course: {}\n".format(course.name))
+        output.write("Day: {}\n\n".format(day))
         
-        return send_file(
-            output,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            as_attachment=True,
-            download_name=f'{course.name}_Day{day}_Answers.xlsx'
-        )
+        # Write the summary section
+        output.write("SUMMARY\n")
+        student_scores.to_csv(output, index=False)
+        output.write("\n\nDETAILED ANSWERS\n")
+        df.to_csv(output, index=False)
+        
+        # Create the response
+        response = make_response(output.getvalue())
+        response.headers["Content-Disposition"] = f"attachment; filename={course.name}_Day{day}_Answers.csv"
+        response.headers["Content-type"] = "text/csv"
+        
+        return response
         
     except Exception as e:
         flash(f'Error exporting answers: {str(e)}', 'error')
