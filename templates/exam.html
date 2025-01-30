@@ -711,26 +711,53 @@ document.addEventListener('DOMContentLoaded', function() {
         const storageKey = `examTimer_${courseId}_v2`;
         
         let timeLeft;
-        const savedTime = localStorage.getItem(storageKey);
-        const startTime = localStorage.getItem(`${storageKey}_startTime`);
-        
-        if (savedTime && startTime) {
-            const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000);
-            timeLeft = Math.max(0, minutes * 60 - elapsed);
+        let displayValue;
+
+        // First try to get the server-side timer status
+        try {
+            const response = await fetch('/get_timer_status');
+            const data = await response.json();
             
-            // If timer has expired, clear storage
-            if (timeLeft <= 0) {
-                clearTimerStorage(courseId);
-                timeLeft = minutes * 60;
+            if (data.success && data.timers[courseId]) {
+                const timerData = data.timers[courseId];
+                if (timerData.active && timerData.start_time) {
+                    const serverTime = new Date(data.server_time);
+                    const endTime = new Date(timerData.end_time);
+                    timeLeft = Math.max(0, Math.floor((endTime - serverTime) / 1000));
+                    
+                    // Store the server's end time for future reference
+                    localStorage.setItem(`${storageKey}_endTime`, endTime.getTime().toString());
+                    localStorage.setItem(`${storageKey}_serverTime`, serverTime.getTime().toString());
+                }
             }
-        } else {
-            timeLeft = minutes * 60;
-            const now = Date.now();
-            localStorage.setItem(storageKey, timeLeft);
-            localStorage.setItem(`${storageKey}_startTime`, now);
+        } catch (error) {
+            console.error('Error fetching timer status:', error);
         }
 
-        let displayValue = timeLeft;
+        // If server data is not available, fall back to localStorage
+        if (typeof timeLeft === 'undefined') {
+            const savedTime = localStorage.getItem(storageKey);
+            const startTime = localStorage.getItem(`${storageKey}_startTime`);
+            const savedEndTime = localStorage.getItem(`${storageKey}_endTime`);
+            const savedServerTime = localStorage.getItem(`${storageKey}_serverTime`);
+            
+            if (savedEndTime && savedServerTime) {
+                const now = Date.now();
+                const timeDiff = now - parseInt(savedServerTime);
+                const endTime = parseInt(savedEndTime);
+                timeLeft = Math.max(0, Math.floor((endTime - (parseInt(savedServerTime) + timeDiff)) / 1000));
+            } else if (savedTime && startTime) {
+                const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000);
+                timeLeft = Math.max(0, minutes * 60 - elapsed);
+            } else {
+                timeLeft = minutes * 60;
+                const now = Date.now();
+                localStorage.setItem(storageKey, timeLeft);
+                localStorage.setItem(`${storageKey}_startTime`, now);
+            }
+        }
+
+        displayValue = timeLeft;
         
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
@@ -800,27 +827,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Handle visibility change
-        document.addEventListener('visibilitychange', function() {
+        document.addEventListener('visibilitychange', async function() {
             if (document.visibilityState === 'visible') {
-                const startTime = localStorage.getItem(`${storageKey}_startTime`);
-                if (startTime) {
-                    const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000);
-                    const newTimeLeft = Math.max(0, minutes * 60 - elapsed);
+                try {
+                    const response = await fetch('/get_timer_status');
+                    const data = await response.json();
                     
-                    // If timer has expired while page was hidden
-                    if (newTimeLeft <= 0) {
-                        clearTimerStorage(courseId);
-                        timer.textContent = "Time's Up!";
-                        timer.classList.add('danger');
-                        const form = document.querySelector('form[action*="submit_exam"]');
-                        if (form) form.submit();
-                        return;
+                    if (data.success && data.timers[courseId]) {
+                        const timerData = data.timers[courseId];
+                        if (timerData.active && timerData.end_time) {
+                            const serverTime = new Date(data.server_time);
+                            const endTime = new Date(timerData.end_time);
+                            const newTimeLeft = Math.max(0, Math.floor((endTime - serverTime) / 1000));
+                            
+                            // Update localStorage with new server time
+                            localStorage.setItem(`${storageKey}_endTime`, endTime.getTime().toString());
+                            localStorage.setItem(`${storageKey}_serverTime`, serverTime.getTime().toString());
+                            
+                            if (newTimeLeft <= 0) {
+                                clearTimerStorage(courseId);
+                                timer.textContent = "Time's Up!";
+                                timer.classList.add('danger');
+                                const form = document.querySelector('form[action*="submit_exam"]');
+                                if (form) form.submit();
+                                return;
+                            }
+                            
+                            timeLeft = newTimeLeft;
+                            displayValue = timeLeft;
+                            timer.textContent = formatTime(timeLeft);
+                            updateTimerStyle();
+                        }
                     }
-                    
-                    timeLeft = newTimeLeft;
-                    displayValue = timeLeft;
-                    timer.textContent = formatTime(timeLeft);
-                    updateTimerStyle();
+                } catch (error) {
+                    console.error('Error refreshing timer status:', error);
+                    // Fall back to localStorage if server request fails
+                    const startTime = localStorage.getItem(`${storageKey}_startTime`);
+                    if (startTime) {
+                        const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000);
+                        const newTimeLeft = Math.max(0, minutes * 60 - elapsed);
+                        timeLeft = newTimeLeft;
+                        displayValue = timeLeft;
+                        timer.textContent = formatTime(timeLeft);
+                        updateTimerStyle();
+                    }
                 }
             }
         });
