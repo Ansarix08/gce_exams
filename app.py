@@ -15,6 +15,7 @@ from typing import Dict, List
 from sqlalchemy import inspect
 import pandas as pd
 import io
+import openpyxl
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -1375,24 +1376,94 @@ def export_answers():
         student_scores.columns = ['Student', 'Total Questions', 'Correct Answers']
         student_scores['Score (%)'] = (student_scores['Correct Answers'] / student_scores['Total Questions'] * 100).round(2)
         
-        # Create CSV output
-        output = io.StringIO()
+        # Create Excel file in memory
+        output = io.BytesIO()
         
-        # Write the header
-        output.write("Export Date: {}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-        output.write("Course: {}\n".format(course.name))
-        output.write("Day: {}\n\n".format(day))
+        # Create a Pandas Excel writer using openpyxl as the engine
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            # Write Summary Sheet
+            student_scores.to_excel(writer, sheet_name='Summary', startrow=4, index=False)
+            workbook = writer.book
+            summary_sheet = writer.sheets['Summary']
+            
+            # Add headers to summary sheet
+            summary_sheet['A1'] = f"Export Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            summary_sheet['A2'] = f"Course: {course.name}"
+            summary_sheet['A3'] = f"Day: {day}"
+            summary_sheet['A5'] = "SUMMARY"
+            
+            # Style the headers
+            for cell in summary_sheet[1:5]:
+                for c in cell:
+                    if c.value:
+                        c.font = openpyxl.styles.Font(bold=True, size=12, color='1F497D')
+            
+            # Style the column headers
+            header_row = 5  # The row with column headers
+            for cell in summary_sheet[header_row]:
+                cell.fill = openpyxl.styles.PatternFill(start_color='4F81BD', end_color='4F81BD', fill_type='solid')
+                cell.font = openpyxl.styles.Font(bold=True, color='FFFFFF')
+                cell.border = openpyxl.styles.Border(
+                    left=openpyxl.styles.Side(style='thin'),
+                    right=openpyxl.styles.Side(style='thin'),
+                    top=openpyxl.styles.Side(style='thin'),
+                    bottom=openpyxl.styles.Side(style='thin')
+                )
+            
+            # Write Detailed Answers Sheet
+            df.to_excel(writer, sheet_name='Detailed Answers', index=False)
+            detailed_sheet = writer.sheets['Detailed Answers']
+            
+            # Style the detailed sheet headers
+            for cell in detailed_sheet[1]:  # First row
+                cell.fill = openpyxl.styles.PatternFill(start_color='4F81BD', end_color='4F81BD', fill_type='solid')
+                cell.font = openpyxl.styles.Font(bold=True, color='FFFFFF')
+                cell.border = openpyxl.styles.Border(
+                    left=openpyxl.styles.Side(style='thin'),
+                    right=openpyxl.styles.Side(style='thin'),
+                    top=openpyxl.styles.Side(style='thin'),
+                    bottom=openpyxl.styles.Side(style='thin')
+                )
+            
+            # Add conditional formatting for correct/incorrect answers
+            for row in detailed_sheet.iter_rows(min_row=2):  # Skip header row
+                is_correct = row[-1].value  # Last column is 'Is Correct'
+                if is_correct is not None:
+                    color = 'C6EFCE' if is_correct else 'FFC7CE'
+                    text_color = '006100' if is_correct else '9C0006'
+                    row[-1].fill = openpyxl.styles.PatternFill(start_color=color, end_color=color, fill_type='solid')
+                    row[-1].font = openpyxl.styles.Font(color=text_color)
+                
+                # Add borders to all cells
+                for cell in row:
+                    cell.border = openpyxl.styles.Border(
+                        left=openpyxl.styles.Side(style='thin'),
+                        right=openpyxl.styles.Side(style='thin'),
+                        top=openpyxl.styles.Side(style='thin'),
+                        bottom=openpyxl.styles.Side(style='thin')
+                    )
+            
+            # Adjust column widths
+            for worksheet in [summary_sheet, detailed_sheet]:
+                for column in worksheet.columns:
+                    max_length = 0
+                    column = [cell for cell in column]
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = (max_length + 2)
+                    worksheet.column_dimensions[column[0].column_letter].width = adjusted_width
         
-        # Write the summary section
-        output.write("SUMMARY\n")
-        student_scores.to_csv(output, index=False)
-        output.write("\n\nDETAILED ANSWERS\n")
-        df.to_csv(output, index=False)
+        # Prepare the response
+        output.seek(0)
         
         # Create the response
         response = make_response(output.getvalue())
-        response.headers["Content-Disposition"] = f"attachment; filename={course.name}_Day{day}_Answers.csv"
-        response.headers["Content-type"] = "text/csv"
+        response.headers["Content-Disposition"] = f"attachment; filename={course.name}_Day{day}_Answers.xlsx"
+        response.headers["Content-type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         
         return response
         
