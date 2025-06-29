@@ -43,6 +43,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(120), nullable=False)
     is_teacher = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)  # Add is_active field
     answers = db.relationship('Answer', backref='user', lazy=True)
     absences = db.relationship('ExamAbsence', backref='user', lazy=True)
     question_selections = db.relationship('QuestionSelection', backref='student', lazy=True)
@@ -175,6 +176,9 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
+        if user and user.is_teacher and not user.is_active:
+            flash('Your account is deactivated. Please contact an administrator.', 'danger')
+            return render_template('login.html', form=form)
         if user and check_password_hash(user.password_hash, form.password.data):
             login_user(user)
             
@@ -1580,6 +1584,17 @@ if __name__ == '__main__':
         
         # Create all tables
         db.create_all()
+
+        # One-time data migration to set is_active for existing users
+        try:
+            from sqlalchemy import null
+            count = db.session.query(User).filter(User.is_active.is_(null())).update({'is_active': True}, synchronize_session=False)
+            if count > 0:
+                db.session.commit()
+                print(f"Updated {count} users with null is_active status.")
+        except Exception as e:
+            print(f"Could not perform data migration for is_active: {e}")
+            db.session.rollback()
         
         # Add timer_active column if it doesn't exist
         inspector = inspect(db.engine)
