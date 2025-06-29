@@ -809,9 +809,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 timer.textContent = "Time's Up!";
                 timer.classList.add('danger');
                 clearTimerStorage(courseId);
+                
+                // Display a clear message that time is up and no more answers can be submitted
+                const timeUpMessage = document.createElement('div');
+                timeUpMessage.className = 'time-up-message';
+                timeUpMessage.style.position = 'fixed';
+                timeUpMessage.style.top = '60px'; // Position below the navbar to not block logout
+                timeUpMessage.style.left = '50%';
+                timeUpMessage.style.transform = 'translateX(-50%)';
+                timeUpMessage.style.width = '90%';
+                timeUpMessage.style.maxWidth = '800px';
+                timeUpMessage.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+                timeUpMessage.style.color = 'white';
+                timeUpMessage.style.padding = '18px 25px';
+                timeUpMessage.style.textAlign = 'center';
+                timeUpMessage.style.fontWeight = '600';
+                timeUpMessage.style.fontSize = '18px';
+                timeUpMessage.style.zIndex = '9999'; // Lower z-index to not block navbar
+                timeUpMessage.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25)';
+                timeUpMessage.style.borderRadius = '8px';
+                timeUpMessage.style.backdropFilter = 'blur(5px)';
+                timeUpMessage.style.border = '1px solid rgba(255,255,255,0.1)';
+                
+                // Create a more structured and visually appealing message
+                timeUpMessage.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                        <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-clock" style="font-size: 20px;"></i>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-size: 20px; font-weight: 700; margin-bottom: 5px;">Time's Up!</div>
+                            <div style="font-size: 16px; opacity: 0.9;">Your exam is being submitted automatically. You can no longer submit answers.</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add the message to the page without animations
+                document.body.prepend(timeUpMessage);
+                
+                // Disable all answer forms
+                document.querySelectorAll('.answer-form').forEach(form => {
+                    const inputs = form.querySelectorAll('input[type="radio"]');
+                    inputs.forEach(input => {
+                        input.disabled = true;
+                    });
+                    
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.style.opacity = '0.5';
+                        submitButton.style.cursor = 'not-allowed';
+                    }
+                });
+                
                 const form = document.querySelector('form[action*="submit_exam"]');
                 if (form) {
-                    setTimeout(() => form.submit(), 1000);
+                    setTimeout(() => form.submit(), 3000); // Give more time to see the message
                 }
                 return;
             }
@@ -848,8 +901,63 @@ document.addEventListener('DOMContentLoaded', function() {
                                 clearTimerStorage(courseId);
                                 timer.textContent = "Time's Up!";
                                 timer.classList.add('danger');
+                                
+                                // Display a clear message that time is up and no more answers can be submitted
+                                const timeUpMessage = document.createElement('div');
+                                timeUpMessage.className = 'time-up-message';
+                                timeUpMessage.style.position = 'fixed';
+                                timeUpMessage.style.top = '60px'; // Position below the navbar to not block logout
+                                timeUpMessage.style.left = '50%';
+                                timeUpMessage.style.transform = 'translateX(-50%)';
+                                timeUpMessage.style.width = '90%';
+                                timeUpMessage.style.maxWidth = '800px';
+                                timeUpMessage.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+                                timeUpMessage.style.color = 'white';
+                                timeUpMessage.style.padding = '18px 25px';
+                                timeUpMessage.style.textAlign = 'center';
+                                timeUpMessage.style.fontWeight = '600';
+                                timeUpMessage.style.fontSize = '18px';
+                                timeUpMessage.style.zIndex = '9999'; // Lower z-index to not block navbar
+                                timeUpMessage.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25)';
+                                timeUpMessage.style.borderRadius = '8px';
+                                timeUpMessage.style.backdropFilter = 'blur(5px)';
+                                timeUpMessage.style.border = '1px solid rgba(255,255,255,0.1)';
+                                
+                                // Create a more structured and visually appealing message
+                                timeUpMessage.innerHTML = `
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                                        <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-clock" style="font-size: 20px;"></i>
+                                        </div>
+                                        <div style="text-align: left;">
+                                            <div style="font-size: 20px; font-weight: 700; margin-bottom: 5px;">Time's Up!</div>
+                                            <div style="font-size: 16px; opacity: 0.9;">Your exam is being submitted automatically. You can no longer submit answers.</div>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                // Add the message to the page without animations
+                                document.body.prepend(timeUpMessage);
+                                
+                                // Disable all answer forms
+                                document.querySelectorAll('.answer-form').forEach(form => {
+                                    const inputs = form.querySelectorAll('input[type="radio"]');
+                                    inputs.forEach(input => {
+                                        input.disabled = true;
+                                    });
+                                    
+                                    const submitButton = form.querySelector('button[type="submit"]');
+                                    if (submitButton) {
+                                        submitButton.disabled = true;
+                                        submitButton.style.opacity = '0.5';
+                                        submitButton.style.cursor = 'not-allowed';
+                                    }
+                                });
+                                
                                 const form = document.querySelector('form[action*="submit_exam"]');
-                                if (form) form.submit();
+                                if (form) {
+                                    setTimeout(() => form.submit(), 3000); // Give more time to see the message
+                                }
                                 return;
                             }
                             
@@ -886,19 +994,203 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Store scroll position before form submission
+    // Handle form submission without page reload for both submit and edit answer forms
     document.querySelectorAll('.answer-form').forEach(form => {
         form.addEventListener('submit', function(e) {
-            // Store current scroll position in session storage
-            sessionStorage.setItem('scrollPosition', window.scrollY);
+            e.preventDefault(); // Prevent the default form submission
+            
+            const formData = new FormData(this);
+            const url = this.getAttribute('action');
+            const questionId = this.querySelector('input[name="question_id"]').value;
+            const questionElement = document.getElementById('question_' + questionId);
+            
+            // Show loading state
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            submitButton.disabled = true;
+            
+            // Determine if this is a submit or edit action
+            const isEdit = url.includes('edit_answer');
+            const successMessage = isEdit ? 'Answer updated successfully!' : 'Answer submitted successfully!';
+            
+            // Use XMLHttpRequest which is more reliable for form submissions
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 400) {
+                    // Success - update the UI
+                    const statusElement = questionElement.querySelector('.status');
+                    if (statusElement) {
+                        statusElement.className = 'status answered';
+                        statusElement.innerHTML = '<i class="fas fa-check"></i> Answered';
+                    }
+                    
+                    // Store the current scroll position
+                    const currentScrollPosition = window.scrollY;
+                    
+                    // Update the question content
+                    const secondXhr = new XMLHttpRequest();
+                    secondXhr.open('GET', window.location.href, true);
+                    secondXhr.onload = function() {
+                        if (secondXhr.status >= 200 && secondXhr.status < 400) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(secondXhr.responseText, 'text/html');
+                            const newQuestionContent = doc.querySelector('#question_' + questionId + ' .question-content');
+                            const questionContent = questionElement.querySelector('.question-content');
+                            
+                            if (newQuestionContent && questionContent) {
+                                questionContent.innerHTML = newQuestionContent.innerHTML;
+                                
+                                // Add event listeners to the newly added form if it exists
+                                const newForm = questionContent.querySelector('.answer-form');
+                                if (newForm) {
+                                    attachFormSubmitHandler(newForm);
+                                }
+                                
+                                // Restore scroll position
+                                window.scrollTo(0, currentScrollPosition);
+                                
+                                // Check if all questions are answered
+                                updateSubmitExamButton();
+                                
+                                // Show success notification
+                                showNotification(successMessage, 'success');
+                            } else {
+                                // If we can't find the updated content, show success but don't update UI
+                                showNotification(successMessage, 'success');
+                            }
+                        } else {
+                            showNotification(successMessage, 'success');
+                        }
+                    };
+                    
+                    secondXhr.onerror = function() {
+                        // Still show success since the answer was submitted
+                        showNotification(successMessage, 'success');
+                    };
+                    
+                    secondXhr.send();
+                } else {
+                    // Error handling
+                    submitButton.innerHTML = originalButtonText;
+                    submitButton.disabled = false;
+                    showNotification('There was an error processing your answer. Please try again.', 'error');
+                }
+            };
+            
+            xhr.onerror = function() {
+                // Network error
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+                showNotification('Network error. Please check your connection and try again.', 'error');
+            };
+            
+            xhr.send(formData);
         });
     });
-
-    // Restore scroll position after page load
-    if (sessionStorage.getItem('scrollPosition') !== null) {
-        window.scrollTo(0, parseInt(sessionStorage.getItem('scrollPosition')));
-        sessionStorage.removeItem('scrollPosition');
+    
+    // Function to attach submit handler to forms (needed for dynamically added forms)
+    function attachFormSubmitHandler(form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent the default form submission
+            
+            const formData = new FormData(this);
+            const url = this.getAttribute('action');
+            const questionId = this.querySelector('input[name="question_id"]').value;
+            const questionElement = document.getElementById('question_' + questionId);
+            
+            // Show loading state
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            submitButton.disabled = true;
+            
+            // Determine if this is a submit or edit action
+            const isEdit = url.includes('edit_answer');
+            const successMessage = isEdit ? 'Answer updated successfully!' : 'Answer submitted successfully!';
+            
+            // Use XMLHttpRequest which is more reliable for form submissions
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 400) {
+                    // Success - update the UI
+                    const statusElement = questionElement.querySelector('.status');
+                    if (statusElement) {
+                        statusElement.className = 'status answered';
+                        statusElement.innerHTML = '<i class="fas fa-check"></i> Answered';
+                    }
+                    
+                    // Store the current scroll position
+                    const currentScrollPosition = window.scrollY;
+                    
+                    // Update the question content
+                    const secondXhr = new XMLHttpRequest();
+                    secondXhr.open('GET', window.location.href, true);
+                    secondXhr.onload = function() {
+                        if (secondXhr.status >= 200 && secondXhr.status < 400) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(secondXhr.responseText, 'text/html');
+                            const newQuestionContent = doc.querySelector('#question_' + questionId + ' .question-content');
+                            const questionContent = questionElement.querySelector('.question-content');
+                            
+                            if (newQuestionContent && questionContent) {
+                                questionContent.innerHTML = newQuestionContent.innerHTML;
+                                
+                                // Add event listeners to the newly added form if it exists
+                                const newForm = questionContent.querySelector('.answer-form');
+                                if (newForm) {
+                                    attachFormSubmitHandler(newForm);
+                                }
+                                
+                                // Restore scroll position
+                                window.scrollTo(0, currentScrollPosition);
+                                
+                                // Check if all questions are answered
+                                updateSubmitExamButton();
+                                
+                                // Show success notification
+                                showNotification(successMessage, 'success');
+                            } else {
+                                // If we can't find the updated content, show success but don't update UI
+                                showNotification(successMessage, 'success');
+                            }
+                        } else {
+                            showNotification(successMessage, 'success');
+                        }
+                    };
+                    
+                    secondXhr.onerror = function() {
+                        // Still show success since the answer was submitted
+                        showNotification(successMessage, 'success');
+                    };
+                    
+                    secondXhr.send();
+                } else {
+                    // Error handling
+                    submitButton.innerHTML = originalButtonText;
+                    submitButton.disabled = false;
+                    showNotification('There was an error processing your answer. Please try again.', 'error');
+                }
+            };
+            
+            xhr.onerror = function() {
+                // Network error
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+                showNotification('Network error. Please check your connection and try again.', 'error');
+            };
+            
+            xhr.send(formData);
+        });
     }
+
+    // No need to restore scroll position as we're not reloading the page anymore
 
     // Notification function
     function showNotification(message, type = 'success') {

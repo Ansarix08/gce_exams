@@ -240,18 +240,16 @@
     <div class="main-content">
         <div class="container mt-4">
             <div class="flash-messages">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category if category != 'message' else 'info' }}">
-                            {{ message }}
-                            <button type="button" class="close" aria-label="Close">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
             </div>
             
             {% block content %}{% endblock %}
@@ -261,66 +259,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const flashMessages = document.querySelectorAll('.alert');
-            const AUTO_DISMISS_DELAY = 3000; // 3 seconds before auto-dismiss
-            
-            // Function to dismiss an alert
-            function dismissAlert(alert) {
-                alert.classList.add('fade-out');
-                setTimeout(() => {
-                    alert.remove();
-                }, 500);
-            }
-
-            // Store flash messages in session storage if they exist
-            if (flashMessages.length > 0) {
-                const messages = [];
-                flashMessages.forEach(function(alert) {
-                    messages.push({
-                        message: alert.textContent.trim(),
-                        category: Array.from(alert.classList)
-                            .find(cls => cls.startsWith('alert-'))
-                            .replace('alert-', '')
-                    });
-                });
-                sessionStorage.setItem('flashMessages', JSON.stringify(messages));
-            }
-
-            // Check for stored messages and display them
-            const storedMessages = sessionStorage.getItem('flashMessages');
-            if (storedMessages && flashMessages.length === 0) {
-                const messages = JSON.parse(storedMessages);
-                const flashContainer = document.querySelector('.flash-messages');
-                
-                messages.forEach(function(msg) {
-                    const alert = document.createElement('div');
-                    alert.className = `alert alert-${msg.category}`;
-                    alert.innerHTML = `
-                        ${msg.message}
-                        <button type="button" class="close" aria-label="Close">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    `;
-                    flashContainer.appendChild(alert);
-                    
-                    // Set auto-dismiss timer
-                    setTimeout(() => dismissAlert(alert), AUTO_DISMISS_DELAY);
-                });
-                
-                // Clear stored messages
-                sessionStorage.removeItem('flashMessages');
-            }
-
-            // Add click handlers to all close buttons and set auto-dismiss
-            document.querySelectorAll('.alert').forEach(function(alert) {
-                // Add click handler to close button
-                const closeBtn = alert.querySelector('.close');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', () => dismissAlert(alert));
-                }
-                
-                // Set auto-dismiss timer
-                setTimeout(() => dismissAlert(alert), AUTO_DISMISS_DELAY);
+            const alerts = document.querySelectorAll('.alert-dismissible');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    new bootstrap.Alert(alert).close();
+                }, 5000); // 5 seconds
             });
         });
     </script>
